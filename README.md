@@ -1,10 +1,10 @@
-# Gridpost SaaS — P0–P3 foundation
+# Gridpost SaaS — P0–P4 foundation
 
 Server-centric multi-tenant SaaS: PostgreSQL + RLS, JWT, Prisma, Redis/BullMQ, облачная публикация 24/7,
-OAuth 2.0, KMS-шифрование токенов и веб-клиент на Next.js.
+OAuth 2.0, KMS-шифрование токенов, веб-клиент Next.js и AI Content Studio с brand voice.
 
 > Дорожная карта: [docs/SAAS_ROADMAP.md](../ai-os-new-main/blob/main/docs/SAAS_ROADMAP.md) в соседнем репозитории.
-> Дальше по плану: P4 (AI Content Studio / агент / brand voice), P5 (аналитика).
+> Дальше по плану: P5 (аналитика + AI-рекомендации), P6 (Stripe).
 
 ## Структура
 
@@ -95,9 +95,18 @@ npm run dev:api   # http://localhost:3001/api/v1
 npm run dev:web   # http://localhost:3000
 ```
 
-Разделы: Dashboard (статистика и статусы), Calendar (группировка по датам), Create (языковые варианты, выбор
-аккаунтов и языка, отложенная публикация), Social Accounts (OAuth и ручное подключение Telegram), Settings
-(ротация ключей). JWT хранится в localStorage, все запросы идут через `lib/api.ts`. Тёмная адаптивная тема.
+Разделы: Dashboard (статистика, статусы, ручная публикация черновиков), Calendar, Create, AI Studio,
+Social Accounts, Settings (голос бренда и ротация ключей). JWT в localStorage, все запросы идут через `lib/api.ts`.
+
+## AI (P4)
+
+- Провайдеры: OpenAI-совместимый API, Ollama, `mock` для тестов (`AI_PROVIDER`).
+- `POST /ai/content` — адаптация темы под каждую площадку (заголовок, текст, крючок, хештеги, CTA) с учётом
+  Brand Voice организации и матрицы возможностей платформ.
+- `POST /ai/plan` — контент-план с темами, причинами и предлагаемым временем.
+- Brand Voice: `GET/PUT /ai/brand-voice` — тон, аудитория, язык, длина, запрещённые слова и фирменные выражения.
+- **Human approval**: AI пишет только черновики (`POST /ai/drafts`, статус `DRAFT`). Публикация — отдельный
+  явный вызов `POST /posts/:id/publish`; авто-постинга нет.
 
 Electron из старого репозитория остаётся необязательным клиентом; перенос его в тонкую обёртку над API — отдельная
 задача после P4/P5.

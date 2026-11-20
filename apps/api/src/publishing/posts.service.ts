@@ -74,6 +74,45 @@ export class PostsService {
     return post
   }
 
+  /** AI output lands here: nothing is published without an explicit user action. */
+  async createDraft(input: CreatePostInput) {
+    const window = input.scheduledAt?.toISOString().slice(0, 16) ?? 'draft'
+    const idempotencyKey = makeIdempotencyKey(input.organizationId, input.key, 'draft', window)
+    return this.prisma.withOrg(input.organizationId, async (tx) => {
+      const existing = await tx.post.findUnique({
+        where: { organizationId_idempotencyKey: { organizationId: input.organizationId, idempotencyKey } },
+        include: { targets: true }
+      })
+      if (existing) return existing
+      return tx.post.create({
+        data: {
+          organizationId: input.organizationId,
+          authorId: input.authorId,
+          variants: input.variants as unknown as Prisma.InputJsonValue,
+          idempotencyKey,
+          scheduledAt: input.scheduledAt,
+          status: 'DRAFT',
+          targets: {
+            create: input.targets.map((target) => ({
+              organizationId: input.organizationId,
+              accountId: target.accountId,
+              lang: target.lang,
+              status: 'PENDING'
+            }))
+          }
+        },
+        include: { targets: true }
+      })
+    })
+  }
+
+  async publishDraft(organizationId: string, postId: string) {
+    const post = await this.get(organizationId, postId)
+    if (post.status !== 'DRAFT') throw new Error('Только черновик можно отправить вручную')
+    await this.enqueuePost(organizationId, postId)
+    return this.get(organizationId, postId)
+  }
+
   private async enqueue(
     organizationId: string,
     postId: string,

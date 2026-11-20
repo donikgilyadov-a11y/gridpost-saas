@@ -81,11 +81,50 @@ export interface SocialAccountView {
 export const posts = {
   list: () => api<PostView[]>('/posts'),
   create: (body: unknown) => api<PostView>('/posts', { method: 'POST', body: JSON.stringify(body) }),
-  retry: (id: string) => api<PostView>(`/posts/${id}/retry`, { method: 'POST' })
+  retry: (id: string) => api<PostView>(`/posts/${id}/retry`, { method: 'POST' }),
+  publish: (id: string) => api<PostView>(`/posts/${id}/publish`, { method: 'POST' })
 }
 
 export const accounts = {
   list: () => api<SocialAccountView[]>('/social-accounts'),
   connect: (body: unknown) => api<SocialAccountView>('/social-accounts/connect', { method: 'POST', body: JSON.stringify(body) }),
   oauthUrl: (platform: string) => api<string>(`/oauth/${platform}/url`)
+}
+
+export interface ContentVariant {
+  platform: string
+  title: string
+  text: string
+  hook: string
+  hashtags: string[]
+  cta: string
+}
+
+export interface PlanItem {
+  day: number
+  platform: string
+  topic: string
+  reason: string
+  suggestedTime: string
+}
+
+export interface BrandVoice {
+  tone: string
+  audience: string
+  forbiddenWords: string[]
+  phrases: string[]
+  language: string
+  preferredLength: number
+}
+
+export const ai = {
+  content: (topic: string, platforms: string[]) =>
+    api<ContentVariant[]>('/ai/content', { method: 'POST', body: JSON.stringify({ topic, platforms }) }),
+  plan: (topic: string, weeks: number) =>
+    api<PlanItem[]>('/ai/plan', { method: 'POST', body: JSON.stringify({ topic, weeks }) }),
+  draft: (variants: Record<string, string[]>, targets: { accountId: string; lang: string }[]) =>
+    api<PostView>('/ai/drafts', { method: 'POST', body: JSON.stringify({ variants, targets }) }),
+  voice: () => api<BrandVoice>('/ai/brand-voice'),
+  saveVoice: (voice: BrandVoice) =>
+    api<BrandVoice>('/ai/brand-voice', { method: 'PUT', body: JSON.stringify(voice) })
 }

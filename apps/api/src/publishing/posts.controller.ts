@@ -43,4 +43,9 @@ export class PostsController {
   retry(@CurrentOrg() organizationId: string, @Param('id') id: string) {
     return this.posts.retryFailed(organizationId, id)
   }
+
+  @Post(':id/publish')
+  publish(@CurrentOrg() organizationId: string, @Param('id') id: string) {
+    return this.posts.publishDraft(organizationId, id)
+  }
 }

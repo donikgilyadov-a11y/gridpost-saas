@@ -48,6 +48,11 @@ export default function Dashboard() {
             <span className="mono small">{new Date(post.createdAt).toLocaleString('ru-RU')}</span>
             <span className={`pill ${post.status === 'PUBLISHED' ? 'ok' : post.status === 'FAILED' ? 'err' : 'warn'}`}>{post.status}</span>
             <span className="spacer grow" />
+            {post.status === 'DRAFT' && (
+              <button className="primary small" onClick={() => void posts.publish(post.id).then(() => location.reload())}>
+                Опубликовать
+              </button>
+            )}
             {post.status === 'FAILED' && (
               <button className="ghost small" onClick={() => void posts.retry(post.id).then(() => location.reload())}>
                 ретрай
