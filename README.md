@@ -196,6 +196,15 @@ kubectl apply -f k8s/
 Секреты для Kubernetes создаются отдельно: `kubectl create secret generic gridpost-secrets --from-literal=...`
 (DATABASE_URL, REDIS_URL, JWT_SECRET, KMS_PROVIDER/KMS_KEY_ID, S3_*, OPENAI_API_KEY, STRIPE_*).
 
+## Необязательный Electron-клиент
+
+`desktop/` — тонкая обёртка над размещённым веб-приложением: никаких локальных секретов и очередей, только окно,
+глобальный хоткей `Alt+Shift+P`, трей и скрытие при закрытии. Это **не** старый локальный Gridpost.
+
+```bash
+cd desktop && npm install && GRIDPOST_WEB_URL=https://gridpost.example.com npm start
+```
+
 Electron из старого репозитория остаётся необязательным клиентом; перенос его в тонкую обёртку над API — отдельная
 задача после P4/P5.
 

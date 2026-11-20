@@ -1,0 +1,15 @@
+{
+  "name": "gridpost-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Optional thin Electron client that wraps the hosted Gridpost web app",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "npm run build && electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "typescript": "^5.6.3"
+  }
+}
