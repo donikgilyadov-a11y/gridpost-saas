@@ -13,6 +13,7 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@aws-sdk/client-kms": "^3.1173.0",
     "@gridpost/shared": "0.1.0",
     "@nestjs/common": "^10.4.15",
     "@nestjs/config": "^3.3.0",

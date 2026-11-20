@@ -11,6 +11,7 @@ export interface ConnectAccountInput {
   token: string
   metadata?: Record<string, unknown>
   scopes?: string[]
+  expiresAt?: Date
 }
 
 @Injectable()
@@ -43,7 +44,7 @@ export class SocialAccountsService {
     if (!(input.platform in PLATFORM_PRIORITY)) {
       throw new ConflictException(`Unknown platform: ${input.platform}`)
     }
-    const sealed = this.secrets.encrypt(input.organizationId, input.token)
+    const sealed = await this.secrets.encrypt(input.organizationId, input.token)
     return this.prisma.withOrg(input.organizationId, (tx) =>
       tx.socialAccount.upsert({
         where: {
@@ -60,16 +61,20 @@ export class SocialAccountsService {
           displayName: input.displayName,
           tokenCipher: sealed.cipher,
           tokenIv: sealed.iv,
+          keyVersion: sealed.keyVersion,
           metadata: (input.metadata ?? {}) as object,
           scopes: input.scopes ?? [],
+          expiresAt: input.expiresAt,
           status: 'ACTIVE'
         },
         update: {
           displayName: input.displayName,
           tokenCipher: sealed.cipher,
           tokenIv: sealed.iv,
+          keyVersion: sealed.keyVersion,
           metadata: (input.metadata ?? {}) as object,
           scopes: input.scopes ?? [],
+          expiresAt: input.expiresAt,
           status: 'ACTIVE'
         },
         select: {

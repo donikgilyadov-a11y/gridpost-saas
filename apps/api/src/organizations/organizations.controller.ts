@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
 import { z } from 'zod'
 import { CurrentOrg, CurrentUser, JwtAuthGuard, OrganizationGuard, ZodPipe, type AuthUser } from '../common/auth'
 import { OrganizationsService } from './organizations.service'
+import { SecretsService } from '../secrets/secrets.service'
 
 const createOrganizationSchema = z.object({
   name: z.string().min(1).max(100),
@@ -15,7 +16,10 @@ const createOrganizationSchema = z.object({
 @Controller('organizations')
 @UseGuards(JwtAuthGuard, OrganizationGuard)
 export class OrganizationsController {
-  constructor(private readonly organizations: OrganizationsService) {}
+  constructor(
+    private readonly organizations: OrganizationsService,
+    private readonly secrets: SecretsService
+  ) {}
 
   @Get()
   list(@CurrentUser() user: AuthUser) {
@@ -37,5 +41,12 @@ export class OrganizationsController {
     const organization = await this.organizations.createForUser(user.userId, dto.name, dto.slug)
     await this.organizations.audit(user, 'organization.create', organization.id, { name: dto.name })
     return organization
+  }
+
+  @Post('current/rotate-keys')
+  async rotateKeys(@CurrentUser() user: AuthUser, @CurrentOrg() organizationId: string) {
+    const rotated = await this.secrets.rotate(organizationId)
+    await this.organizations.audit(user, 'organization.rotateKeys', organizationId, { tokens: rotated })
+    return { rotated }
   }
 }

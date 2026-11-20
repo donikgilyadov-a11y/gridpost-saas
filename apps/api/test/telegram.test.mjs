@@ -57,3 +57,69 @@ test('telegram adapter publishes a thread through a mock Bot API', async () => {
     server.close()
   }
 })
+
+test('facebook adapter publishes each thread post to the page feed', async () => {
+  const requests = []
+  const server = createServer((req, res) => {
+    let body = ''
+    req.on('data', (chunk) => (body += chunk))
+    req.on('end', () => {
+      requests.push({ url: req.url, params: new URLSearchParams(body) })
+      res.writeHead(200, { 'content-type': 'application/json' })
+      res.end(JSON.stringify({ id: `fb_${requests.length}` }))
+    })
+  })
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+  process.env.FACEBOOK_API = `http://127.0.0.1:${server.address().port}`
+
+  try {
+    const { publishFacebook } = loadTs('src/publishing/adapters/facebook.ts')
+    const outcome = await publishFacebook({
+      token: 'fb-token',
+      pageId: 'page123',
+      thread: ['Первый', 'Второй']
+    })
+    assert.equal(requests.length, 2)
+    assert.ok(requests[0].url.includes('/page123/feed'))
+    assert.equal(requests[0].params.get('message'), 'Первый')
+    assert.equal(outcome.remoteId, 'fb_1')
+    assert.equal(outcome.url, 'https://www.facebook.com/fb_1')
+  } finally {
+    server.close()
+  }
+})
+
+test('instagram adapter creates a container and publishes it', async () => {
+  const calls = []
+  const server = createServer((req, res) => {
+    const url = req.url ?? ''
+    let body = ''
+    req.on('data', (chunk) => (body += chunk))
+    req.on('end', () => {
+      calls.push({ url, method: req.method, params: new URLSearchParams(body) })
+      res.writeHead(200, { 'content-type': 'application/json' })
+      if (url.includes('status_code')) res.end(JSON.stringify({ status_code: 'FINISHED' }))
+      else if (url.includes('shortcode')) res.end(JSON.stringify({ shortcode: 'ABC123' }))
+      else if (url.includes('media_publish')) res.end(JSON.stringify({ id: 'ig_99' }))
+      else res.end(JSON.stringify({ id: 'container_1' }))
+    })
+  })
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+  process.env.INSTAGRAM_API = `http://127.0.0.1:${server.address().port}`
+
+  try {
+    const { publishInstagram } = loadTs('src/publishing/adapters/instagram.ts')
+    const outcome = await publishInstagram({
+      token: 'ig-token',
+      igUserId: 'ig_user',
+      caption: 'Привет из Gridpost',
+      imageUrl: 'https://cdn.test/post.jpg'
+    })
+    assert.ok(calls.some((call) => call.url.includes('/ig_user/media') && call.method === 'POST'))
+    assert.ok(calls.some((call) => call.url.includes('media_publish')))
+    assert.equal(outcome.remoteId, 'ig_99')
+    assert.equal(outcome.url, 'https://www.instagram.com/p/ABC123/')
+  } finally {
+    server.close()
+  }
+})

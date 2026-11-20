@@ -20,7 +20,9 @@ BEGIN
     'posts',
     'post_targets',
     'brand_voices',
-    'audit_logs'
+    'audit_logs',
+    'organization_keys',
+    'oauth_states'
   ]
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);

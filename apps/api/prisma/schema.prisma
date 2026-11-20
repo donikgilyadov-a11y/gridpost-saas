@@ -62,6 +62,8 @@ model Organization {
   postTargets    PostTarget[]
   auditLogs      AuditLog[]
   brandVoice     BrandVoice?
+  secretKeys     OrganizationKey[]
+  oauthStates    OAuthState[]
 
   @@map("organizations")
 }
@@ -105,6 +107,8 @@ model SocialAccount {
   displayName    String
   tokenCipher    Bytes
   tokenIv        Bytes
+  /// Version of the organization data key used for this token.
+  keyVersion     Int       @default(1)
   /// Platform-specific non-secret settings: chatId, pageId, igUserId, ...
   metadata       Json     @default("{}")
   scopes         String[]
@@ -199,4 +203,36 @@ model AuditLog {
 
   @@index([organizationId, createdAt])
   @@map("audit_logs")
+}
+
+/// Envelope-encrypted data key, one per organization and key version.
+/// `ciphertext` is produced by KMS (or by the local master key in development).
+model OrganizationKey {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  version        Int
+  ciphertext     Bytes
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, version])
+  @@map("organization_keys")
+}
+
+model OAuthState {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  userId         String   @db.Uuid
+  platform       String
+  state          String   @unique
+  codeVerifier   String
+  redirectUri    String
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, platform])
+  @@map("oauth_states")
 }

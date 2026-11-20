@@ -6,6 +6,7 @@ import { OrganizationsModule } from './organizations/organizations.module'
 import { QueueModule } from './queue/queue.module'
 import { SecretsModule } from './secrets/secrets.module'
 import { PublishingModule } from './publishing/publishing.module'
+import { OAuthModule } from './oauth/oauth.module'
 import { HealthController } from './health/health.controller'
 
 @Module({
@@ -16,7 +17,8 @@ import { HealthController } from './health/health.controller'
     OrganizationsModule,
     QueueModule,
     SecretsModule,
-    PublishingModule
+    PublishingModule,
+    OAuthModule
   ],
   controllers: [HealthController]
 })

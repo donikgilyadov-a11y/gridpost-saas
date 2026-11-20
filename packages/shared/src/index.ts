@@ -36,6 +36,31 @@ export const PLATFORM_PRIORITY: Record<PlatformId, 0 | 1 | 2> = {
   threads: 2
 }
 
+export interface PlatformCapabilities {
+  text: boolean
+  images: boolean
+  video: boolean
+  threads: boolean
+  scheduling: 'native' | 'server' | 'none'
+  analytics: boolean
+  note?: string
+}
+
+/** Verified against official APIs — capabilities differ per network. */
+export const PLATFORM_CAPABILITIES: Record<PlatformId, PlatformCapabilities> = {
+  telegram: { text: true, images: true, video: true, threads: true, scheduling: 'server', analytics: false, note: 'Bot API не умеет отложенный постинг' },
+  facebook: { text: true, images: true, video: true, threads: false, scheduling: 'native', analytics: true },
+  instagram: { text: true, images: true, video: true, threads: false, scheduling: 'native', analytics: true, note: 'Business-аккаунт + Graph API; TEXT media_type доступен не везде' },
+  linkedin: { text: true, images: true, video: true, threads: false, scheduling: 'none', analytics: true },
+  x: { text: true, images: true, video: true, threads: true, scheduling: 'none', analytics: true, note: 'API v2 не умеет отложенный постинг' },
+  youtube: { text: false, images: false, video: true, threads: false, scheduling: 'native', analytics: true },
+  tiktok: { text: false, images: false, video: true, threads: false, scheduling: 'native', analytics: true },
+  pinterest: { text: true, images: true, video: true, threads: false, scheduling: 'native', analytics: true },
+  bluesky: { text: true, images: true, video: true, threads: true, scheduling: 'server', analytics: false },
+  mastodon: { text: true, images: true, video: true, threads: true, scheduling: 'native', analytics: false },
+  threads: { text: true, images: true, video: true, threads: true, scheduling: 'none', analytics: true }
+}
+
 export const PLAN_LIMITS = {
   free: { accounts: 2, postsPerMonth: 30 },
   starter: { accounts: 5, postsPerMonth: 300 },

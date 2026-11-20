@@ -5,6 +5,8 @@ import type { PublishJobPayload } from '@gridpost/shared'
 import { PrismaService } from '../prisma/prisma.service'
 import { SecretsService } from '../secrets/secrets.service'
 import { publishTelegram } from './adapters/telegram'
+import { publishFacebook } from './adapters/facebook'
+import { publishInstagram } from './adapters/instagram'
 
 interface VariantMap {
   [lang: string]: string[]
@@ -55,23 +57,47 @@ export class PublisherService {
       if (account.status !== 'ACTIVE') {
         throw new UnrecoverableError(`Social account is ${account.status}`)
       }
+      if (account.expiresAt && account.expiresAt.getTime() < Date.now()) {
+        await this.prisma.withOrg(payload.organizationId, (tx) =>
+          tx.socialAccount.update({ where: { id: account.id }, data: { status: 'EXPIRED' } })
+        )
+        throw new UnrecoverableError('OAuth token expired — reconnect the account')
+      }
 
       const metadata = account.metadata as Record<string, unknown>
-      const token = this.secrets.decrypt(payload.organizationId, {
+      const token = await this.secrets.decrypt(payload.organizationId, {
         cipher: account.tokenCipher,
-        iv: account.tokenIv
+        iv: account.tokenIv,
+        keyVersion: account.keyVersion
       })
       const variants = post.variants as unknown as VariantMap
       const thread = variants[payload.lang] ?? Object.values(variants)[0] ?? []
 
-      if (payload.platform !== 'telegram') {
-        throw new UnrecoverableError(`Platform ${payload.platform} adapter lands in P2`)
+      let outcome: { remoteId: string; url?: string }
+      switch (payload.platform) {
+        case 'telegram': {
+          if (typeof metadata.chatId !== 'string') throw new UnrecoverableError('Telegram chatId is missing')
+          outcome = await publishTelegram({ token, chatId: metadata.chatId, thread })
+          break
+        }
+        case 'facebook': {
+          if (typeof metadata.pageId !== 'string') throw new UnrecoverableError('Facebook pageId is missing')
+          outcome = await publishFacebook({ token, pageId: metadata.pageId, thread })
+          break
+        }
+        case 'instagram': {
+          if (typeof metadata.igUserId !== 'string') throw new UnrecoverableError('Instagram igUserId is missing')
+          outcome = await publishInstagram({
+            token,
+            igUserId: metadata.igUserId,
+            caption: thread.join('\n\n'),
+            ...(typeof metadata.imageUrl === 'string' ? { imageUrl: metadata.imageUrl } : {})
+          })
+          break
+        }
+        default:
+          throw new UnrecoverableError(`Platform ${payload.platform} adapter lands in a later phase`)
       }
-      if (!metadata.chatId || typeof metadata.chatId !== 'string') {
-        throw new UnrecoverableError('Telegram chatId is missing')
-      }
-
-      const outcome = await publishTelegram({ token, chatId: metadata.chatId, thread })
       await this.finish(payload, 'PUBLISHED', outcome.remoteId, outcome.url)
       this.logger.log(`published ${payload.targetId} → ${outcome.remoteId}`)
     } catch (error) {
