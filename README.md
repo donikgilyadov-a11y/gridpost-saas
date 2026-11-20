@@ -185,6 +185,17 @@ Threads (Threads API), Pinterest (Pins API) — плюс YouTube и TikTok, ко
 Локальный запуск: `docker compose up -d`, `npm install`, `npm run prisma:generate`, миграции, `npm run dev:api`
 и `npm run dev:web`.
 
+Образы из релиза `v0.1.0`:
+
+```bash
+docker pull ghcr.io/donikgilyadov-a11y/gridpost-saas-api:v0.1.0
+docker pull ghcr.io/donikgilyadov-a11y/gridpost-saas-web:v0.1.0
+kubectl apply -f k8s/
+```
+
+Секреты для Kubernetes создаются отдельно: `kubectl create secret generic gridpost-secrets --from-literal=...`
+(DATABASE_URL, REDIS_URL, JWT_SECRET, KMS_PROVIDER/KMS_KEY_ID, S3_*, OPENAI_API_KEY, STRIPE_*).
+
 Electron из старого репозитория остаётся необязательным клиентом; перенос его в тонкую обёртку над API — отдельная
 задача после P4/P5.
 
