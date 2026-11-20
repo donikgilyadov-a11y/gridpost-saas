@@ -117,6 +117,25 @@ export interface BrandVoice {
   preferredLength: number
 }
 
+export interface AnalyticsSummary {
+  totals: Record<string, number>
+  byPlatform: Record<string, Record<string, number>>
+  recent: Array<{ platform: string; capturedAt: string; reach: number | null; impressions: number | null; likes: number | null }>
+}
+
+export interface Recommendation {
+  title: string
+  reason: string
+  action: string
+  priority: 'high' | 'medium' | 'low'
+}
+
+export const analytics = {
+  summary: () => api<AnalyticsSummary>('/analytics/summary'),
+  sync: () => api<{ synced: number; errors: string[] }>('/analytics/sync', { method: 'POST', body: '{}' }),
+  recommendations: () => api<Recommendation[]>('/analytics/recommendations')
+}
+
 export const ai = {
   content: (topic: string, platforms: string[]) =>
     api<ContentVariant[]>('/ai/content', { method: 'POST', body: JSON.stringify({ topic, platforms }) }),

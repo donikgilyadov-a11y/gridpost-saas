@@ -22,7 +22,8 @@ BEGIN
     'brand_voices',
     'audit_logs',
     'organization_keys',
-    'oauth_states'
+    'oauth_states',
+    'metric_snapshots'
   ]
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);

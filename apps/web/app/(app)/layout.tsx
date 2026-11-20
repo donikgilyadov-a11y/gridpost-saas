@@ -11,6 +11,7 @@ const NAV = [
   { href: '/create', label: 'Create' },
   { href: '/ai', label: 'AI Studio' },
   { href: '/accounts', label: 'Social Accounts' },
+  { href: '/analytics', label: 'Analytics' },
   { href: '/settings', label: 'Settings' }
 ]
 

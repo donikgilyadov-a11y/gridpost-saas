@@ -29,3 +29,17 @@ export async function publishFacebook(request: FacebookRequest) {
   if (!firstId) throw new Error('Facebook вернул пустой ответ')
   return { remoteId: firstId, url: `https://www.facebook.com/${firstId}` }
 }
+
+export async function fetchFacebookStats(token: string, remoteId: string) {
+  const base = process.env.FACEBOOK_API ?? 'https://graph.facebook.com/v19.0'
+  const response = await fetch(
+    `${base}/${remoteId}/insights?metric=post_impressions,post_reach,post_engaged_users&access_token=${encodeURIComponent(token)}`
+  )
+  const data = (await response.json().catch(() => ({}))) as {
+    data?: Array<{ name: string; values?: Array<{ value: number }> }>
+    error?: { message: string }
+  }
+  if (!response.ok) throw new Error(data.error?.message ?? `Facebook Insights HTTP ${response.status}`)
+  const value = (name: string) => data.data?.find((item) => item.name === name)?.values?.[0]?.value
+  return { impressions: value('post_impressions'), reach: value('post_reach'), engagements: value('post_engaged_users') }
+}

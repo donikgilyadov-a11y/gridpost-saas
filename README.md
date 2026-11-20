@@ -1,10 +1,10 @@
-# Gridpost SaaS — P0–P4 foundation
+# Gridpost SaaS — P0–P5 foundation
 
 Server-centric multi-tenant SaaS: PostgreSQL + RLS, JWT, Prisma, Redis/BullMQ, облачная публикация 24/7,
-OAuth 2.0, KMS-шифрование токенов, веб-клиент Next.js и AI Content Studio с brand voice.
+OAuth 2.0, KMS-шифрование токенов, веб-клиент Next.js, AI Content Studio и центр аналитики.
 
 > Дорожная карта: [docs/SAAS_ROADMAP.md](../ai-os-new-main/blob/main/docs/SAAS_ROADMAP.md) в соседнем репозитории.
-> Дальше по плану: P5 (аналитика + AI-рекомендации), P6 (Stripe).
+> Дальше по плану: P6 (Stripe, тарифы и лимиты), P7 (Sentry/OTel, MFA, GDPR, Kubernetes).
 
 ## Структура
 
@@ -107,6 +107,15 @@ Social Accounts, Settings (голос бренда и ротация ключе�
 - Brand Voice: `GET/PUT /ai/brand-voice` — тон, аудитория, язык, длина, запрещённые слова и фирменные выражения.
 - **Human approval**: AI пишет только черновики (`POST /ai/drafts`, статус `DRAFT`). Публикация — отдельный
   явный вызов `POST /posts/:id/publish`; авто-постинга нет.
+
+## Аналитика (P5)
+
+- `POST /analytics/sync` — тянет Insights из Facebook/Instagram для опубликованных постов с `remoteId`,
+  сохраняет снимки метрик (доступность зависит от разрешений API).
+- `GET /analytics/summary` — суммы Reach, Impressions, Likes, Comments, Shares, Clicks, Followers и разбивка
+  по площадкам; `nullable` поля означают, что метрику площадка не отдаёт.
+- `GET /analytics/recommendations` — AI-агент анализирует сводку и возвращает конкретные действия с приоритетом.
+- В UI — вкладка Analytics с синхронизацией, карточками метрик и рекомендациями.
 
 Electron из старого репозитория остаётся необязательным клиентом; перенос его в тонкую обёртку над API — отдельная
 задача после P4/P5.

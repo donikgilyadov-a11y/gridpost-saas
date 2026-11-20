@@ -123,3 +123,39 @@ test('instagram adapter creates a container and publishes it', async () => {
     server.close()
   }
 })
+
+test('facebook and instagram stats adapters normalize Insights responses', async () => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(JSON.stringify({
+      data: [
+        { name: 'post_impressions', values: [{ value: 1200 }] },
+        { name: 'post_reach', values: [{ value: 900 }] },
+        { name: 'impressions', values: [{ value: 800 }] },
+        { name: 'reach', values: [{ value: 600 }] },
+        { name: 'likes', values: [{ value: 45 }] },
+        { name: 'comments', values: [{ value: 7 }] },
+        { name: 'saved', values: [{ value: 12 }] },
+        { name: 'post_engaged_users', values: [{ value: 60 }] }
+      ]
+    }))
+  })
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+  const base = `http://127.0.0.1:${server.address().port}`
+  process.env.FACEBOOK_API = base
+  process.env.INSTAGRAM_API = base
+
+  try {
+    const facebook = loadTs('src/publishing/adapters/facebook.ts')
+    const instagram = loadTs('src/publishing/adapters/instagram.ts')
+    const fb = await facebook.fetchFacebookStats('token', 'fb_1')
+    assert.equal(fb.impressions, 1200)
+    assert.equal(fb.engagements, 60)
+    const ig = await instagram.fetchInstagramStats('token', 'ig_1')
+    assert.equal(ig.reach, 600)
+    assert.equal(ig.likes, 45)
+    assert.equal(ig.shares, 12)
+  } finally {
+    server.close()
+  }
+})

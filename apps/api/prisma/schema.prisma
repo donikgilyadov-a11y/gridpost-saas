@@ -64,6 +64,7 @@ model Organization {
   brandVoice     BrandVoice?
   secretKeys     OrganizationKey[]
   oauthStates    OAuthState[]
+  metrics        MetricSnapshot[]
 
   @@map("organizations")
 }
@@ -218,6 +219,29 @@ model OrganizationKey {
 
   @@unique([organizationId, version])
   @@map("organization_keys")
+}
+
+/// Raw metric snapshots; availability depends on platform API permissions.
+model MetricSnapshot {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  postId         String?   @db.Uuid
+  accountId      String    @db.Uuid
+  platform       String
+  capturedAt     DateTime  @default(now())
+  reach          Int?
+  impressions    Int?
+  likes          Int?
+  comments       Int?
+  shares         Int?
+  clicks         Int?
+  followers      Int?
+  ctr            Float?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, platform, capturedAt])
+  @@map("metric_snapshots")
 }
 
 model OAuthState {

@@ -59,3 +59,17 @@ export async function publishInstagram(request: InstagramRequest) {
   }
   return { remoteId, url }
 }
+
+export async function fetchInstagramStats(token: string, remoteId: string) {
+  const base = process.env.INSTAGRAM_API ?? 'https://graph.facebook.com/v19.0'
+  const response = await fetch(
+    `${base}/${remoteId}/insights?metric=impressions,reach,likes,comments,saved&access_token=${encodeURIComponent(token)}`
+  )
+  const data = (await response.json().catch(() => ({}))) as {
+    data?: Array<{ name: string; values?: Array<{ value: number }> }>
+    error?: { message: string }
+  }
+  if (!response.ok) throw new Error(data.error?.message ?? `Instagram Insights HTTP ${response.status}`)
+  const value = (name: string) => data.data?.find((item) => item.name === name)?.values?.[0]?.value
+  return { impressions: value('impressions'), reach: value('reach'), likes: value('likes'), comments: value('comments'), shares: value('saved') }
+}

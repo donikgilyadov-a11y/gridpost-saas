@@ -29,6 +29,17 @@ interface PlanResponse {
   items?: PlanItem[]
 }
 
+export interface Recommendation {
+  title: string
+  reason: string
+  action: string
+  priority: 'high' | 'medium' | 'low'
+}
+
+interface RecommendationResponse {
+  recommendations?: Recommendation[]
+}
+
 @Injectable()
 export class AiService implements OnModuleInit {
   private readonly logger = new Logger(AiService.name)
@@ -102,5 +113,17 @@ export class AiService implements OnModuleInit {
 
     const data = parseJsonResponse<PlanResponse>(await this.provider.complete(prompt))
     return data.items ?? []
+  }
+
+  async recommendations(summary: unknown): Promise<Recommendation[]> {
+    const prompt = [
+      'You are a data-driven social media analyst. Return ONLY valid JSON.',
+      'JSON shape: {"recommendations":[{"title":"...","reason":"...","action":"...","priority":"high|medium|low"}]}',
+      'Metrics summary (per platform):',
+      JSON.stringify(summary),
+      'Give concrete actions: best formats/topics/times, weak posts to improve or reuse, platforms to prioritize.'
+    ].join('\n')
+    const data = parseJsonResponse<RecommendationResponse>(await this.provider.complete(prompt))
+    return data.recommendations ?? []
   }
 }

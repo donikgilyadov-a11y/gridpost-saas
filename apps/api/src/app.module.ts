@@ -8,6 +8,7 @@ import { SecretsModule } from './secrets/secrets.module'
 import { PublishingModule } from './publishing/publishing.module'
 import { OAuthModule } from './oauth/oauth.module'
 import { AiModule } from './ai/ai.module'
+import { AnalyticsModule } from './analytics/analytics.module'
 import { HealthController } from './health/health.controller'
 
 @Module({
@@ -20,7 +21,8 @@ import { HealthController } from './health/health.controller'
     SecretsModule,
     PublishingModule,
     OAuthModule,
-    AiModule
+    AiModule,
+    AnalyticsModule
   ],
   controllers: [HealthController]
 })

@@ -13,3 +13,5 @@
   Social Accounts (OAuth и Telegram), Settings (ротация ключей), общий API-клиент и адаптивная тёмная тема.
 - **P4**: AI провайдеры (OpenAI/Ollama/mock), Content Studio с адаптацией под площадки, контент-план, Brand Voice
   на уровне организации, AI-черновики с обязательным ручным подтверждением публикации, вкладка AI Studio в UI.
+- **P5**: метрики Reach/Impressions/Engagement и др. (снимки в PostgreSQL), синхронизация Insights Facebook и
+  Instagram, сводка по площадкам, AI-рекомендации, вкладка Analytics в веб-клиенте.
