@@ -2,6 +2,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
 COPY packages/shared/package.json packages/shared/
 RUN npm install
 COPY . .
@@ -12,6 +13,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
 COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
 COPY packages/shared/package.json packages/shared/
 RUN npm install --omit=dev && npm cache clean --force
 # Generated Prisma Client from the build stage (prisma CLI is dev-only here)
