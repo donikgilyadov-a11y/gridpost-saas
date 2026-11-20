@@ -7,6 +7,14 @@ import { SecretsService } from '../secrets/secrets.service'
 import { publishTelegram } from './adapters/telegram'
 import { publishFacebook } from './adapters/facebook'
 import { publishInstagram } from './adapters/instagram'
+import { publishLinkedIn } from './adapters/linkedin'
+import { publishX } from './adapters/x'
+import { publishBluesky } from './adapters/bluesky'
+import { publishMastodon } from './adapters/mastodon'
+import { publishThreads } from './adapters/threads'
+import { publishPinterest } from './adapters/pinterest'
+import { publishYouTube } from './adapters/youtube'
+import { publishTikTok } from './adapters/tiktok'
 
 interface VariantMap {
   [lang: string]: string[]
@@ -95,14 +103,78 @@ export class PublisherService {
           })
           break
         }
+        case 'linkedin': {
+          outcome = await publishLinkedIn({
+            token,
+            text: thread.join('\n\n'),
+            ...(typeof metadata.authorUrn === 'string' ? { authorUrn: metadata.authorUrn } : {}),
+            ...(typeof metadata.imageUrl === 'string' ? { imageUrl: metadata.imageUrl } : {})
+          })
+          break
+        }
+        case 'x': {
+          outcome = await publishX({ token, thread })
+          break
+        }
+        case 'bluesky': {
+          if (typeof metadata.handle !== 'string') throw new UnrecoverableError('Bluesky handle is missing')
+          outcome = await publishBluesky({
+            token,
+            handle: metadata.handle,
+            thread,
+            ...(typeof metadata.pds === 'string' ? { pds: metadata.pds } : {})
+          })
+          break
+        }
+        case 'mastodon': {
+          if (typeof metadata.host !== 'string') throw new UnrecoverableError('Mastodon host is missing')
+          const result = await publishMastodon({
+            token,
+            host: metadata.host,
+            thread,
+            lang: payload.lang,
+            ...(payload.scheduledAt ? { scheduledAt: new Date(payload.scheduledAt) } : {})
+          })
+          outcome = { remoteId: result.remoteId, url: result.url }
+          break
+        }
+        case 'threads': {
+          if (typeof metadata.userId !== 'string') throw new UnrecoverableError('Threads userId is missing')
+          outcome = await publishThreads({ token, userId: metadata.userId, text: thread.join('\n\n') })
+          break
+        }
+        case 'pinterest': {
+          if (typeof metadata.boardId !== 'string' || typeof metadata.imageUrl !== 'string') {
+            throw new UnrecoverableError('Pinterest boardId and imageUrl are required')
+          }
+          outcome = await publishPinterest({
+            token,
+            boardId: metadata.boardId,
+            title: thread[0]?.slice(0, 100) ?? 'Gridpost',
+            description: thread.join('\n\n'),
+            imageUrl: metadata.imageUrl
+          })
+          break
+        }
+        case 'youtube': {
+          outcome = await publishYouTube()
+          break
+        }
+        case 'tiktok': {
+          outcome = await publishTikTok()
+          break
+        }
         default:
-          throw new UnrecoverableError(`Platform ${payload.platform} adapter lands in a later phase`)
+          throw new UnrecoverableError(`Platform ${payload.platform} has no adapter`)
       }
       await this.finish(payload, 'PUBLISHED', outcome.remoteId, outcome.url)
       this.logger.log(`published ${payload.targetId} → ${outcome.remoteId}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
-      const permanent = error instanceof UnrecoverableError || /HTTP 4\d\d(?!\s*429)/.test(message)
+      const permanent =
+        error instanceof UnrecoverableError ||
+        (error instanceof Error && error.name === 'PermanentAdapterError') ||
+        /HTTP 4\d\d(?!\s*429)/.test(message)
       await this.finish(payload, 'FAILED', undefined, undefined, message)
       if (permanent) throw new UnrecoverableError(message)
       throw error

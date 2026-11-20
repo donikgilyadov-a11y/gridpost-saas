@@ -19,3 +19,5 @@
   принудительное соблюдение лимитов аккаунтов на сервере, вкладка Billing.
 - **P7**: TOTP MFA, rate limiting, аудит изменяющих запросов, Sentry + OpenTelemetry, GDPR-экспорт и удаление
   организации, бэкап-скрипт, Kubernetes-манифесты, тесты TOTP.
+- **P8**: адаптеры LinkedIn, X, Bluesky, Mastodon, Threads, Pinterest, YouTube и TikTok; dispatcher воркера
+  на 11 площадок; permanent-ошибки для API, не поддерживающих текст; тесты X/Mastodon/Bluesky на моках.

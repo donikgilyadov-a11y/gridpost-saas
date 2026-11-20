@@ -1,10 +1,9 @@
-# Gridpost SaaS — P0–P7 foundation
+# Gridpost SaaS — P0–P8 foundation
 
 Server-centric multi-tenant SaaS: PostgreSQL + RLS, JWT, Prisma, Redis/BullMQ, облачная публикация 24/7,
-OAuth 2.0, KMS, Next.js, AI Studio, аналитика, Stripe-биллинг, MFA, аудит и наблюдаемость.
+11 адаптеров соцсетей, OAuth 2.0, KMS, Next.js, AI Studio, аналитика, Stripe, MFA, аудит и наблюдаемость.
 
 > Дорожная карта: [docs/SAAS_ROADMAP.md](../ai-os-new-main/blob/main/docs/SAAS_ROADMAP.md) в соседнем репозитории.
-> Дальше по плану: P8 (остальные интеграции: LinkedIn/X/YouTube/TikTok/Pinterest/Bluesky/Mastodon/Threads).
 
 ## Структура
 
@@ -143,6 +142,17 @@ Social Accounts, Settings (голос бренда и ротация ключе�
 - **Бэкапы**: `scripts/backup.sh` — `pg_dump` + gzip, ротация и опциональная загрузка в S3.
 - **Kubernetes**: манифесты в `k8s/` (deployments, services, ingress, configmap). Секреты создаются отдельно
   как `gridpost-secrets` и не хранятся в git.
+
+## Интеграции (P8)
+
+Воркер умеет публиковать в 11 площадок: Telegram, Facebook Pages, Instagram Business, LinkedIn (UGC Posts),
+X (API v2, треды через reply), Bluesky (atproto `createRecord`, reply-chain), Mastodon (`scheduled_at` нативно),
+Threads (Threads API), Pinterest (Pins API) — плюс YouTube и TikTok, которые через официальные API принимают
+**только видео**: эти два адаптера возвращают понятную permanent-ошибку до появления S3-пайплайна загрузки файлов.
+
+Матрица возможностей и ограничений — `PLATFORM_CAPABILITIES` в `packages/shared`. OAuth-конфигурации пока
+покрывают Facebook/Instagram; для остальных площадок подключение идёт через переданный токен и `metadata`
+(authorUrn, handle, pds, host, userId, boardId, imageUrl и т.д.). Их provider-specific OAuth-экраны — следующий шаг.
 
 Electron из старого репозитория остаётся необязательным клиентом; перенос его в тонкую обёртку над API — отдельная
 задача после P4/P5.
