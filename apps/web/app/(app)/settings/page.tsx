@@ -12,11 +12,37 @@ export default function SettingsPage() {
   const [voice, setVoice] = useState<BrandVoice | null>(null)
   const [mfaSecret, setMfaSecret] = useState('')
   const [mfaCode, setMfaCode] = useState('')
+  const [members, setMembers] = useState<Array<{ id: string; role: string; user: { email: string; displayName: string } }>>([])
+  const [inviteEmail, setInviteEmail] = useState('')
 
   useEffect(() => {
     void api<Org>('/organizations/current').then(setOrg).catch((err: Error) => setMessage(err.message))
     void ai.voice().then(setVoice).catch(() => undefined)
+    void loadMembers()
   }, [])
+
+  async function loadMembers() {
+    try {
+      const list = await api<Array<{ id: string; role: string; user: { email: string; displayName: string } }>>('/organizations/current/members')
+      setMembers(list)
+    } catch {
+      setMembers([])
+    }
+  }
+
+  async function invite() {
+    try {
+      await api('/organizations/current/members', {
+        method: 'POST',
+        body: JSON.stringify({ email: inviteEmail, role: 'MEMBER' })
+      })
+      setInviteEmail('')
+      await loadMembers()
+      setMessage('Участник добавлен')
+    } catch (err) {
+      setMessage((err as Error).message)
+    }
+  }
 
   async function saveVoice() {
     if (!voice) return
@@ -88,6 +114,40 @@ export default function SettingsPage() {
             <div>Часовой пояс: <span className="mono">{org.timezone}</span></div>
           </div>
         ) : <div className="dim">Загрузка…</div>}
+      </div>
+      <div className="card">
+        <h2>Команда</h2>
+        <div className="row">
+          <input placeholder="email пользователя" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
+          <button className="primary small" onClick={() => void invite()}>Добавить</button>
+        </div>
+        <div style={{ marginTop: 10 }}>
+          {members.map((member) => (
+            <div className="row small" key={member.id} style={{ padding: '6px 0', borderBottom: '1px solid var(--line)' }}>
+              <span className="grow">{member.user.displayName} · {member.user.email}</span>
+              <span className="pill">{member.role}</span>
+              {member.role !== 'OWNER' && (
+                <>
+                  <button
+                    className="ghost small"
+                    onClick={() => void api(`/organizations/current/members/${member.id}/role`, {
+                      method: 'POST',
+                      body: JSON.stringify({ role: member.role === 'ADMIN' ? 'MEMBER' : 'ADMIN' })
+                    }).then(() => loadMembers())}
+                  >
+                    смена роли
+                  </button>
+                  <button
+                    className="ghost small"
+                    onClick={() => void api(`/organizations/current/members/${member.id}`, { method: 'DELETE' }).then(() => loadMembers())}
+                  >
+                    удалить
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
       <div className="card">
         <h2>Голос бренда</h2>

@@ -43,3 +43,21 @@ export async function fetchFacebookStats(token: string, remoteId: string) {
   const value = (name: string) => data.data?.find((item) => item.name === name)?.values?.[0]?.value
   return { impressions: value('post_impressions'), reach: value('post_reach'), engagements: value('post_engaged_users') }
 }
+
+export async function fetchFacebookComments(token: string, remoteId: string) {
+  const base = process.env.FACEBOOK_API ?? 'https://graph.facebook.com/v19.0'
+  const response = await fetch(
+    `${base}/${remoteId}/comments?fields=id,message,from{name},created_time&access_token=${encodeURIComponent(token)}`
+  )
+  const data = (await response.json().catch(() => ({}))) as {
+    data?: Array<{ id: string; message?: string; from?: { name?: string }; created_time?: string }>
+    error?: { message: string }
+  }
+  if (!response.ok) throw new Error(data.error?.message ?? `Facebook comments HTTP ${response.status}`)
+  return (data.data ?? []).map((item) => ({
+    id: item.id,
+    author: item.from?.name ?? 'Неизвестно',
+    text: item.message ?? '',
+    createdAt: item.created_time
+  }))
+}

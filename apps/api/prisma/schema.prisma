@@ -67,6 +67,9 @@ model Organization {
   metrics        MetricSnapshot[]
   subscription   Subscription?
   mediaAssets    MediaAsset[]
+  clients        Client[]
+  automations    AutomationRule[]
+  inboxMessages  InboxMessage[]
 
   @@map("organizations")
 }
@@ -114,6 +117,7 @@ model SocialAccount {
   tokenIv        Bytes
   /// Version of the organization data key used for this token.
   keyVersion     Int       @default(1)
+  clientId       String?   @db.Uuid
   /// Platform-specific non-secret settings: chatId, pageId, igUserId, ...
   metadata       Json     @default("{}")
   scopes         String[]
@@ -123,6 +127,7 @@ model SocialAccount {
   updatedAt      DateTime      @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
   targets      PostTarget[]
 
   @@unique([organizationId, platform, externalId])
@@ -208,6 +213,67 @@ model AuditLog {
 
   @@index([organizationId, createdAt])
   @@map("audit_logs")
+}
+
+model Client {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  name           String
+  description    String?
+  color          String   @default("#7c9cff")
+  createdAt      DateTime @default(now())
+
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  socialAccounts SocialAccount[]
+
+  @@index([organizationId])
+  @@map("clients")
+}
+
+enum AutomationTrigger {
+  SCHEDULE_GAP
+  LOW_ENGAGEMENT
+  NEW_POST
+}
+
+enum AutomationAction {
+  CREATE_DRAFT
+  NOTIFY
+}
+
+model AutomationRule {
+  id             String            @id @default(uuid()) @db.Uuid
+  organizationId String            @db.Uuid
+  name           String
+  trigger        AutomationTrigger
+  action         AutomationAction
+  config         Json              @default("{}")
+  enabled        Boolean           @default(true)
+  lastRunAt      DateTime?
+  createdAt      DateTime          @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, enabled])
+  @@map("automation_rules")
+}
+
+model InboxMessage {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  platform       String
+  externalId     String
+  author         String
+  text           String
+  url            String?
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, platform, externalId])
+  @@index([organizationId, isRead])
+  @@map("inbox_messages")
 }
 
 model MediaAsset {

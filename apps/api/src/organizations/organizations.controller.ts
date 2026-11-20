@@ -1,8 +1,15 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common'
 import { z } from 'zod'
 import { CurrentOrg, CurrentUser, JwtAuthGuard, OrganizationGuard, ZodPipe, type AuthUser } from '../common/auth'
 import { OrganizationsService } from './organizations.service'
 import { SecretsService } from '../secrets/secrets.service'
+
+const inviteSchema = z.object({
+  email: z.string().email(),
+  role: z.enum(['ADMIN', 'MEMBER']).default('MEMBER')
+})
+
+const roleSchema = z.object({ role: z.enum(['OWNER', 'ADMIN', 'MEMBER']) })
 
 const createOrganizationSchema = z.object({
   name: z.string().min(1).max(100),
@@ -41,6 +48,25 @@ export class OrganizationsController {
     const organization = await this.organizations.createForUser(user.userId, dto.name, dto.slug)
     await this.organizations.audit(user, 'organization.create', organization.id, { name: dto.name })
     return organization
+  }
+
+  @Post('current/members')
+  invite(@CurrentOrg() organizationId: string, @Body(new ZodPipe(inviteSchema)) body: { email: string; role: 'ADMIN' | 'MEMBER' }) {
+    return this.organizations.invite(organizationId, body.email, body.role)
+  }
+
+  @Post('current/members/:id/role')
+  updateRole(
+    @CurrentOrg() organizationId: string,
+    @Param('id') id: string,
+    @Body(new ZodPipe(roleSchema)) body: { role: 'OWNER' | 'ADMIN' | 'MEMBER' }
+  ) {
+    return this.organizations.updateRole(organizationId, id, body.role)
+  }
+
+  @Delete('current/members/:id')
+  removeMember(@CurrentOrg() organizationId: string, @Param('id') id: string) {
+    return this.organizations.removeMember(organizationId, id)
   }
 
   @Post('current/rotate-keys')

@@ -39,6 +39,30 @@ export class OrganizationsService {
     )
   }
 
+  async invite(organizationId: string, email: string, role: 'ADMIN' | 'MEMBER') {
+    const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase() } })
+    if (!user) throw new Error('Пользователь с таким email не зарегистрирован')
+    return this.prisma.withOrg(organizationId, (tx) =>
+      tx.membership.upsert({
+        where: { organizationId_userId: { organizationId, userId: user.id } },
+        create: { organizationId, userId: user.id, role },
+        update: { role }
+      })
+    )
+  }
+
+  updateRole(organizationId: string, membershipId: string, role: 'OWNER' | 'ADMIN' | 'MEMBER') {
+    return this.prisma.withOrg(organizationId, (tx) =>
+      tx.membership.update({ where: { id: membershipId }, data: { role } })
+    )
+  }
+
+  removeMember(organizationId: string, membershipId: string) {
+    return this.prisma.withOrg(organizationId, (tx) =>
+      tx.membership.delete({ where: { id: membershipId } })
+    )
+  }
+
   audit(user: AuthUser, action: string, resource: string, metadata: Record<string, unknown> = {}) {
     return this.prisma.withOrg(user.organizationId, (tx) =>
       tx.auditLog.create({

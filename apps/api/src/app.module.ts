@@ -14,6 +14,9 @@ import { AnalyticsModule } from './analytics/analytics.module'
 import { BillingModule } from './billing/billing.module'
 import { PrivacyModule } from './privacy/privacy.module'
 import { MediaModule } from './media/media.module'
+import { ClientsModule } from './clients/clients.module'
+import { AutomationsModule } from './automations/automations.module'
+import { InboxModule } from './inbox/inbox.module'
 import { HealthController } from './health/health.controller'
 import { AuditInterceptor } from './audit/audit.interceptor'
 
@@ -32,7 +35,10 @@ import { AuditInterceptor } from './audit/audit.interceptor'
     AnalyticsModule,
     BillingModule,
     PrivacyModule,
-    MediaModule
+    MediaModule,
+    ClientsModule,
+    AutomationsModule,
+    InboxModule
   ],
   controllers: [HealthController],
   providers: [

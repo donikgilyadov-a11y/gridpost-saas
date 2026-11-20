@@ -25,7 +25,10 @@ BEGIN
     'oauth_states',
     'metric_snapshots',
     'subscriptions',
-    'media_assets'
+    'media_assets',
+    'clients',
+    'automation_rules',
+    'inbox_messages'
   ]
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);

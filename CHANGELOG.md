@@ -23,3 +23,5 @@
   на 11 площадок; permanent-ошибки для API, не поддерживающих текст; тесты X/Mastodon/Bluesky на моках.
 - **P8b**: S3-медиатека с presigned загрузкой, привязка медиа к постам, OAuth для LinkedIn и X (PKCE/Basic),
   вкладка Media и выбор файлов в композере, тесты OAuth-конфигураций.
+- **P8c**: Teams (members/roles), Clients с привязкой аккаунтов, Automations с AI-черновиками по триггерам,
+  Inbox с синхронизацией комментариев Facebook/Instagram и соответствующие вкладки UI.

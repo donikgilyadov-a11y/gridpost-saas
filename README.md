@@ -164,6 +164,15 @@ Threads (Threads API), Pinterest (Pins API) — плюс YouTube и TikTok, ко
   подключаются токеном и `metadata` (handle, pds, host, userId, boardId).
 - YouTube/TikTok по-прежнему требуют resumable video upload — адаптеры честно возвращают permanent-ошибку.
 
+## Команды, клиенты, автоматизации и входящие
+
+- **Teams**: приглашение участника по email, смена роли (`OWNER/ADMIN/MEMBER`) и удаление — в Settings.
+- **Clients**: модель клиента агентства, привязка соцаккаунтов через `POST /clients/accounts/:id/assign`, вкладка Clients.
+- **Automations**: правила `SCHEDULE_GAP` и `LOW_ENGAGEMENT` с действием `CREATE_DRAFT`; `POST /automations/run`
+  проверяет условия и через AI создаёт **только черновики** (без публикации), вкладка Automations.
+- **Inbox**: синхронизация комментариев Facebook/Instagram через Graph API, дедупликация по `externalId`,
+  отметка «прочитано», вкладка Inbox.
+
 Electron из старого репозитория остаётся необязательным клиентом; перенос его в тонкую обёртку над API — отдельная
 задача после P4/P5.
 

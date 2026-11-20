@@ -12,6 +12,9 @@ const NAV = [
   { href: '/ai', label: 'AI Studio' },
   { href: '/accounts', label: 'Social Accounts' },
   { href: '/media', label: 'Media' },
+  { href: '/inbox', label: 'Inbox' },
+  { href: '/clients', label: 'Clients' },
+  { href: '/automations', label: 'Automations' },
   { href: '/analytics', label: 'Analytics' },
   { href: '/billing', label: 'Billing' },
   { href: '/settings', label: 'Settings' }

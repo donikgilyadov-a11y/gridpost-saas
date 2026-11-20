@@ -130,6 +130,57 @@ export interface Recommendation {
   priority: 'high' | 'medium' | 'low'
 }
 
+export interface InboxItem {
+  id: string
+  platform: string
+  author: string
+  text: string
+  url: string | null
+  isRead: boolean
+  createdAt: string
+}
+
+export const inbox = {
+  list: () => api<InboxItem[]>('/inbox'),
+  sync: () => api<{ imported: number; errors: string[] }>('/inbox/sync', { method: 'POST', body: '{}' }),
+  read: (id: string) => api<InboxItem>(`/inbox/${id}/read`, { method: 'POST', body: '{}' })
+}
+
+export interface ClientView {
+  id: string
+  name: string
+  description: string | null
+  color: string
+  _count: { socialAccounts: number }
+}
+
+export const clients = {
+  list: () => api<ClientView[]>('/clients'),
+  create: (body: { name: string; description?: string; color?: string }) =>
+    api<ClientView>('/clients', { method: 'POST', body: JSON.stringify(body) }),
+  remove: (id: string) => api<{ deleted: true }>(`/clients/${id}`, { method: 'DELETE' })
+}
+
+export interface AutomationView {
+  id: string
+  name: string
+  trigger: string
+  action: string
+  enabled: boolean
+  lastRunAt: string | null
+  config: Record<string, unknown>
+}
+
+export const automations = {
+  list: () => api<AutomationView[]>('/automations'),
+  create: (body: { name: string; trigger: string; action: string; config?: Record<string, unknown> }) =>
+    api<AutomationView>('/automations', { method: 'POST', body: JSON.stringify(body) }),
+  toggle: (id: string, enabled: boolean) =>
+    api<AutomationView>(`/automations/${id}`, { method: 'PATCH', body: JSON.stringify({ enabled }) }),
+  remove: (id: string) => api<{ deleted: true }>(`/automations/${id}`, { method: 'DELETE' }),
+  run: () => api<Array<{ rule: string; createdDraft?: string; reason?: string }>>('/automations/run', { method: 'POST', body: '{}' })
+}
+
 export interface MediaAssetView {
   id: string
   name: string
