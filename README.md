@@ -1,10 +1,10 @@
-# Gridpost SaaS — P0 + P1 + P2 foundation
+# Gridpost SaaS — P0–P3 foundation
 
-Server-centric multi-tenant SaaS: организация как граница изоляции, PostgreSQL + RLS, JWT, Prisma, Redis/BullMQ,
-облачная публикация 24/7 с идемпотентностью, OAuth 2.0 и KMS-шифрование токенов.
+Server-centric multi-tenant SaaS: PostgreSQL + RLS, JWT, Prisma, Redis/BullMQ, облачная публикация 24/7,
+OAuth 2.0, KMS-шифрование токенов и веб-клиент на Next.js.
 
 > Дорожная карта: [docs/SAAS_ROADMAP.md](../ai-os-new-main/blob/main/docs/SAAS_ROADMAP.md) в соседнем репозитории.
-> Дальше по плану: P3 (веб-клиент), P4 (AI).
+> Дальше по плану: P4 (AI Content Studio / агент / brand voice), P5 (аналитика).
 
 ## Структура
 
@@ -19,6 +19,7 @@ apps/api/            NestJS API
     secrets/         AES-GCM шифрование токенов с ключом организации (P2: KMS)
     publishing/      посты, social-аккаунты, worker, scheduler, Telegram-адаптер
     health/          GET /api/v1/health
+apps/web/            Next.js клиент: auth, dashboard, calendar, create, accounts, settings
 packages/shared/     общие типы и константы (планы, приоритеты платформ, idempotency key)
 ```
 
@@ -86,6 +87,20 @@ API (все пути под `JwtAuthGuard + OrganizationGuard`):
 - Refresh-токены и автопродление OAuth не сделаны — после истечения аккаунт нужно переподключить.
 - Instagram TEXT-посты зависят от поддержки `media_type=TEXT`; надёжный путь — `imageUrl` (появится с S3 в P3).
 - Реальный OAuth требует `FACEBOOK_APP_ID/SECRET` и `OAUTH_REDIRECT_URI`; в тестах площадки подменяются моками.
+
+## Веб-клиент (P3)
+
+```bash
+npm run dev:api   # http://localhost:3001/api/v1
+npm run dev:web   # http://localhost:3000
+```
+
+Разделы: Dashboard (статистика и статусы), Calendar (группировка по датам), Create (языковые варианты, выбор
+аккаунтов и языка, отложенная публикация), Social Accounts (OAuth и ручное подключение Telegram), Settings
+(ротация ключей). JWT хранится в localStorage, все запросы идут через `lib/api.ts`. Тёмная адаптивная тема.
+
+Electron из старого репозитория остаётся необязательным клиентом; перенос его в тонкую обёртку над API — отдельная
+задача после P4/P5.
 
 ## Проверки
 

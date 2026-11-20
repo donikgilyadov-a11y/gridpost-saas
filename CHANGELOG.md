@@ -9,3 +9,5 @@
 - **P2**: OAuth 2.0 (PKCE + state) для Facebook Pages и Instagram Business, KMS-провайдеры (AWS KMS или локальный
   мастер-ключ) с данных ключом на организацию и ротацией, адаптеры Facebook/Instagram, матрица возможностей
   площадок, проверка срока действия OAuth-токена, unit-тесты трёх адаптеров на моковых API.
+- **P3**: веб-клиент Next.js — авторизация, Dashboard, Calendar, Create (языковые варианты и адресаты),
+  Social Accounts (OAuth и Telegram), Settings (ротация ключей), общий API-клиент и адаптивная тёмная тема.
