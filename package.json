@@ -1,0 +1,20 @@
+{
+  "name": "gridpost-saas",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @gridpost/shared && npm run build --workspace @gridpost/api",
+    "typecheck": "npm run build --workspace @gridpost/shared && npm run typecheck --workspaces --if-present",
+    "dev": "npm run dev --workspace @gridpost/api",
+    "prisma:generate": "npm run prisma:generate --workspace @gridpost/api",
+    "prisma:migrate": "npm run prisma:migrate --workspace @gridpost/api"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.6.3"
+  }
+}

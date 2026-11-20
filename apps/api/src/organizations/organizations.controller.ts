@@ -1,0 +1,41 @@
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
+import { z } from 'zod'
+import { CurrentOrg, CurrentUser, JwtAuthGuard, OrganizationGuard, ZodPipe, type AuthUser } from '../common/auth'
+import { OrganizationsService } from './organizations.service'
+
+const createOrganizationSchema = z.object({
+  name: z.string().min(1).max(100),
+  slug: z
+    .string()
+    .min(2)
+    .max(40)
+    .regex(/^[a-z0-9-]+$/)
+})
+
+@Controller('organizations')
+@UseGuards(JwtAuthGuard, OrganizationGuard)
+export class OrganizationsController {
+  constructor(private readonly organizations: OrganizationsService) {}
+
+  @Get()
+  list(@CurrentUser() user: AuthUser) {
+    return this.organizations.listForUser(user.userId)
+  }
+
+  @Get('current')
+  current(@CurrentOrg() organizationId: string) {
+    return this.organizations.current(organizationId)
+  }
+
+  @Get('current/members')
+  members(@CurrentOrg() organizationId: string) {
+    return this.organizations.members(organizationId)
+  }
+
+  @Post()
+  async create(@CurrentUser() user: AuthUser, @Body(new ZodPipe(createOrganizationSchema)) dto: { name: string; slug: string }) {
+    const organization = await this.organizations.createForUser(user.userId, dto.name, dto.slug)
+    await this.organizations.audit(user, 'organization.create', organization.id, { name: dto.name })
+    return organization
+  }
+}
