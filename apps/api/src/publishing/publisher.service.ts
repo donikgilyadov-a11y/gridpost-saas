@@ -168,11 +168,18 @@ export class PublisherService {
           break
         }
         case 'youtube': {
-          outcome = await publishYouTube()
+          if (!videoUrl) throw new UnrecoverableError('YouTube требует видео в медиатеке поста')
+          outcome = await publishYouTube({
+            token,
+            videoUrl,
+            title: thread[0]?.slice(0, 100) ?? 'Gridpost',
+            description: thread.join('\n\n')
+          })
           break
         }
         case 'tiktok': {
-          outcome = await publishTikTok()
+          if (!videoUrl) throw new UnrecoverableError('TikTok требует видео в медиатеке поста')
+          outcome = await publishTikTok({ token, videoUrl, title: thread[0] ?? 'Gridpost' })
           break
         }
         default:

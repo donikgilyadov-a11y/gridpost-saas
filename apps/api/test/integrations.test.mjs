@@ -81,3 +81,67 @@ test('Bluesky adapter resolves DID and creates a reply chain', async () => {
     mock.close()
   }
 })
+
+test('YouTube adapter performs resumable upload of an S3 video', async () => {
+  let base = ''
+  const server = createServer((req, res) => {
+    if (req.url?.includes('video.mp4')) {
+      res.writeHead(200, { 'content-type': 'video/mp4' })
+      res.end(Buffer.from([1, 2, 3, 4]))
+      return
+    }
+    if (req.method === 'POST') {
+      res.writeHead(200, { 'content-type': 'application/json', location: `${base}/upload` })
+      res.end('{}')
+      return
+    }
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(JSON.stringify({ id: 'yt_1' }))
+  })
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+  base = `http://127.0.0.1:${server.address().port}`
+  process.env.YOUTUBE_API = base
+  try {
+    const { publishYouTube } = loadTs('src/publishing/adapters/youtube.ts')
+    const result = await publishYouTube({
+      token: 'yt-token',
+      videoUrl: `${base}/video.mp4`,
+      title: 'Тестовое видео'
+    })
+    assert.equal(result.remoteId, 'yt_1')
+    assert.equal(result.url, 'https://www.youtube.com/watch?v=yt_1')
+  } finally {
+    server.close()
+  }
+})
+
+test('TikTok adapter initializes publish and polls for completion', async () => {
+  const calls = []
+  const server = createServer((req, res) => {
+    let body = ''
+    req.on('data', (chunk) => (body += chunk))
+    req.on('end', () => {
+      calls.push({ url: req.url, body })
+      res.writeHead(200, { 'content-type': 'application/json' })
+      const response = req.url?.includes('init')
+        ? { data: { publish_id: 'publish_1' } }
+        : { data: { status: 'PUBLISH_COMPLETE', publicaly_available_post_id: ['tt_1'] } }
+      res.end(JSON.stringify(response))
+    })
+  })
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+  process.env.TIKTOK_API = `http://127.0.0.1:${server.address().port}/v2`
+  try {
+    const { publishTikTok } = loadTs('src/publishing/adapters/tiktok.ts')
+    const result = await publishTikTok({
+      token: 'tt-token',
+      videoUrl: 'https://cdn.test/video.mp4',
+      title: 'Тест'
+    })
+    assert.equal(result.remoteId, 'tt_1')
+    assert.match(calls[0].body, /PULL_URL/)
+    assert.match(calls[1].body, /publish_1/)
+  } finally {
+    server.close()
+  }
+})

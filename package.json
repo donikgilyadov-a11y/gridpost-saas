@@ -9,7 +9,7 @@
   "scripts": {
     "dev:api": "npm run dev --workspace @gridpost/api",
     "dev:web": "npm run dev --workspace @gridpost/web",
-    "build": "npm run build --workspace @gridpost/shared && npm run build --workspace @gridpost/api && npm run build --workspace @gridpost/web",
+    "build": "npm run prisma:generate && npm run build --workspace @gridpost/shared && npm run build --workspace @gridpost/api && npm run build --workspace @gridpost/web",
     "test": "npm run test --workspace @gridpost/api",
     "typecheck": "npm run build --workspace @gridpost/shared && npm run typecheck --workspaces --if-present",
     "dev": "npm run dev --workspace @gridpost/api",

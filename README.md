@@ -162,7 +162,8 @@ Threads (Threads API), Pinterest (Pins API) — плюс YouTube и TikTok, ко
 - **OAuth**: добавлены LinkedIn (`w_member_social`, body token exchange, `urn:li:person` из userinfo) и X
   (PKCE + Basic auth, `/2/users/me`). Facebook/Instagram работают через Graph API. Остальные площадки пока
   подключаются токеном и `metadata` (handle, pds, host, userId, boardId).
-- YouTube/TikTok по-прежнему требуют resumable video upload — адаптеры честно возвращают permanent-ошибку.
+- **YouTube/TikTok**: адаптеры загружают видео из S3 — YouTube через resumable session (`X-Upload-Content-*`),
+  TikTok через `PULL_URL` + polling `publish_id`. Без видео в медиатеке пост не публикуется (permanent-ошибка).
 
 ## Команды, клиенты, автоматизации и входящие
 
