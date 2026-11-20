@@ -4,7 +4,6 @@
   "private": true,
   "main": "dist/main.js",
   "scripts": {
-    "postinstall": "prisma generate",
     "dev": "node --watch dist/main.js",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",

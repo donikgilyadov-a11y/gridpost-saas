@@ -28,4 +28,4 @@
 - **P8d**: светлая тема, RU/EN метки навигации, drag-and-drop календаря с эндпоинтом переноса публикации,
   Dockerfile для web и workflow публикации Docker-образов в GHCR по тегу.
 - **P8e**: реальная загрузка видео в YouTube (resumable) и TikTok (PULL_URL + polling publish_id) из S3,
-  тесты обоих адаптеров; Prisma Client генерируется при сборке (чистая Docker-сборка проходит).
+  тесты обоих адаптеров; Prisma Client генерируется при сборке и копируется в production-слой образа.
