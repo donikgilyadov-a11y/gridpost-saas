@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gridpost-config
+data:
+  NODE_ENV: production
+  PORT: "3001"
+  KMS_PROVIDER: aws
+  AI_PROVIDER: openai
+  WEB_ORIGIN: https://gridpost.example.com

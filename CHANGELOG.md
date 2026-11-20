@@ -17,3 +17,5 @@
   Instagram, сводка по площадкам, AI-рекомендации, вкладка Analytics в веб-клиенте.
 - **P6**: Stripe Checkout и Billing Portal, webhook с проверкой подписи, модель подписки, тарифы Free…Enterprise,
   принудительное соблюдение лимитов аккаунтов на сервере, вкладка Billing.
+- **P7**: TOTP MFA, rate limiting, аудит изменяющих запросов, Sentry + OpenTelemetry, GDPR-экспорт и удаление
+  организации, бэкап-скрипт, Kubernetes-манифесты, тесты TOTP.

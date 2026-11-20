@@ -5,6 +5,7 @@ import * as bcrypt from 'bcryptjs'
 import { PrismaService } from '../prisma/prisma.service'
 import type { LoginDto, RegisterDto } from './dto'
 import type { AuthUser } from '../common/auth'
+import { generateTotpSecret, otpauthUrl, verifyTotp } from './totp'
 
 @Injectable()
 export class AuthService {
@@ -49,6 +50,11 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('Неверный email или пароль')
     }
+    if (user.mfaEnabled) {
+      if (!user.mfaSecret || !dto.code || !verifyTotp(user.mfaSecret, dto.code)) {
+        throw new UnauthorizedException('Неверный или отсутствующий код MFA')
+      }
+    }
     const membership = user.memberships[0]
     if (!membership) throw new UnauthorizedException('У пользователя нет организации')
 
@@ -62,6 +68,33 @@ export class AuthService {
       user: { id: user.id, email: user.email },
       organizationId: membership.organizationId
     }
+  }
+
+  async setupMfa(userId: string, email: string) {
+    const secret = generateTotpSecret()
+    await this.prisma.user.update({ where: { id: userId }, data: { mfaSecret: secret } })
+    return { secret, otpauthUrl: otpauthUrl(email, secret) }
+  }
+
+  async enableMfa(userId: string, code: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } })
+    if (!user.mfaSecret || !verifyTotp(user.mfaSecret, code)) {
+      throw new UnauthorizedException('Неверный код MFA')
+    }
+    await this.prisma.user.update({ where: { id: userId }, data: { mfaEnabled: true } })
+    return { enabled: true }
+  }
+
+  async disableMfa(userId: string, code: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } })
+    if (!user.mfaSecret || !verifyTotp(user.mfaSecret, code)) {
+      throw new UnauthorizedException('Неверный код MFA')
+    }
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { mfaEnabled: false, mfaSecret: null }
+    })
+    return { enabled: false }
   }
 
   private sign(user: AuthUser): string {

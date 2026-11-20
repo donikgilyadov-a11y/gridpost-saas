@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gridpost-api
+  labels: { app: gridpost-api }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: gridpost-api }
+  template:
+    metadata:
+      labels: { app: gridpost-api }
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/donikgilyadov-a11y/gridpost-saas-api:latest
+          ports: [{ containerPort: 3001 }]
+          envFrom:
+            - configMapRef: { name: gridpost-config }
+            # Create gridpost-secrets out of git: DATABASE_URL, REDIS_URL,
+            # TOKEN_MASTER_KEY/KMS_KEY_ID, JWT_SECRET, OPENAI_API_KEY,
+            # STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, SENTRY_DSN
+            - secretRef: { name: gridpost-secrets }
+          readinessProbe:
+            httpGet: { path: /api/v1/health, port: 3001 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: { path: /api/v1/health, port: 3001 }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: 1000m, memory: 1Gi }

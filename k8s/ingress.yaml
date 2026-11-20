@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gridpost
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts: [gridpost.example.com, api.gridpost.example.com]
+      secretName: gridpost-tls
+  rules:
+    - host: api.gridpost.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: gridpost-api, port: { number: 3001 } }
+    - host: gridpost.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: gridpost-web, port: { number: 3000 } }

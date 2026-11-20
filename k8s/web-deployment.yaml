@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gridpost-web
+  labels: { app: gridpost-web }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: gridpost-web }
+  template:
+    metadata:
+      labels: { app: gridpost-web }
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/donikgilyadov-a11y/gridpost-saas-web:latest
+          ports: [{ containerPort: 3000 }]
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              value: https://api.gridpost.example.com/api/v1
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }

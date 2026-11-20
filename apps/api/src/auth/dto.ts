@@ -9,8 +9,11 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(1).max(128)
+  password: z.string().min(1).max(128),
+  code: z.string().regex(/^\d{6}$/).optional()
 })
+
+export const mfaCodeSchema = z.object({ code: z.string().regex(/^\d{6}$/) })
 
 export type RegisterDto = z.infer<typeof registerSchema>
 export type LoginDto = z.infer<typeof loginSchema>

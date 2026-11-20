@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ai, api, type BrandVoice } from '@/lib/api'
+import { ai, api, security, type BrandVoice } from '@/lib/api'
 
 interface Org { id: string; name: string; slug: string; plan: string; timezone: string }
 
@@ -10,6 +10,8 @@ export default function SettingsPage() {
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [voice, setVoice] = useState<BrandVoice | null>(null)
+  const [mfaSecret, setMfaSecret] = useState('')
+  const [mfaCode, setMfaCode] = useState('')
 
   useEffect(() => {
     void api<Org>('/organizations/current').then(setOrg).catch((err: Error) => setMessage(err.message))
@@ -26,6 +28,37 @@ export default function SettingsPage() {
       setMessage((err as Error).message)
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function downloadData() {
+    try {
+      const data = await security.exportData()
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = 'gridpost-export.json'
+      link.click()
+      URL.revokeObjectURL(link.href)
+      setMessage('Данные экспортированы')
+    } catch (err) {
+      setMessage((err as Error).message)
+    }
+  }
+
+  async function applyMfa(enable: boolean) {
+    try {
+      if (enable) {
+        const result = await security.mfaEnable(mfaCode)
+        setMessage(result.enabled ? 'MFA включён' : 'Не удалось включить MFA')
+      } else {
+        const result = await security.mfaDisable(mfaCode)
+        setMessage(result.enabled ? 'Не удалось выключить MFA' : 'MFA выключен')
+      }
+      setMfaCode('')
+      setMfaSecret('')
+    } catch (err) {
+      setMessage((err as Error).message)
     }
   }
 
@@ -81,6 +114,37 @@ export default function SettingsPage() {
             <button className="primary small" onClick={() => void saveVoice()} disabled={busy}>Сохранить голос бренда</button>
           </div>
         ) : <div className="dim small">Загрузка…</div>}
+      </div>
+      <div className="card">
+        <h2>Двухфакторная аутентификация</h2>
+        <p className="dim small">TOTP-код из приложения-аутентификатора. После включения он требуется при каждом входе.</p>
+        <div className="row">
+          <button className="ghost small" onClick={() => void security.mfaSetup().then((r) => { setMfaSecret(r.secret); setMessage('Секрет добавлен в приложение: ' + r.otpauthUrl) }).catch((e: Error) => setMessage(e.message))}>
+            Показать секрет
+          </button>
+          {mfaSecret && <span className="mono small">{mfaSecret}</span>}
+        </div>
+        <div className="row" style={{ marginTop: 10 }}>
+          <input placeholder="6-значный код" value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} maxLength={6} style={{ width: 150 }} />
+          <button className="primary small" onClick={() => void applyMfa(true)}>Включить</button>
+          <button className="ghost small" onClick={() => void applyMfa(false)}>Выключить</button>
+        </div>
+      </div>
+      <div className="card">
+        <h2>Данные и приватность (GDPR)</h2>
+        <div className="row">
+          <button className="ghost small" onClick={() => void downloadData()}>Экспортировать данные</button>
+          <button
+            className="ghost small"
+            onClick={() => {
+              if (window.confirm('Удалить организацию и все её данные? Это необратимо.')) {
+                void security.deleteOrganization().then(() => { window.location.href = '/' }).catch((e: Error) => setMessage(e.message))
+              }
+            }}
+          >
+            Удалить организацию
+          </button>
+        </div>
       </div>
       <div className="card">
         <h2>Безопасность</h2>

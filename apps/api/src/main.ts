@@ -3,6 +3,9 @@ import { Logger, ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import * as express from 'express'
 import { AppModule } from './app.module'
+import { initTelemetry } from './telemetry'
+
+initTelemetry()
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule)

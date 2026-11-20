@@ -144,6 +144,14 @@ export interface PlanInfo {
   postsPerMonth: number
 }
 
+export const security = {
+  mfaSetup: () => api<{ secret: string; otpauthUrl: string }>('/auth/mfa/setup', { method: 'POST', body: '{}' }),
+  mfaEnable: (code: string) => api<{ enabled: boolean }>('/auth/mfa/enable', { method: 'POST', body: JSON.stringify({ code }) }),
+  mfaDisable: (code: string) => api<{ enabled: boolean }>('/auth/mfa/disable', { method: 'POST', body: JSON.stringify({ code }) }),
+  exportData: () => api<unknown>('/privacy/export'),
+  deleteOrganization: () => api<{ deleted: true }>('/privacy/organization', { method: 'DELETE' })
+}
+
 export const billing = {
   plans: () => api<PlanInfo[]>('/billing/plans'),
   subscription: () => api<Subscription>('/billing/subscription'),

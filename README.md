@@ -1,10 +1,10 @@
-# Gridpost SaaS — P0–P6 foundation
+# Gridpost SaaS — P0–P7 foundation
 
 Server-centric multi-tenant SaaS: PostgreSQL + RLS, JWT, Prisma, Redis/BullMQ, облачная публикация 24/7,
-OAuth 2.0, KMS, Next.js, AI Studio, аналитика и Stripe-биллинг.
+OAuth 2.0, KMS, Next.js, AI Studio, аналитика, Stripe-биллинг, MFA, аудит и наблюдаемость.
 
 > Дорожная карта: [docs/SAAS_ROADMAP.md](../ai-os-new-main/blob/main/docs/SAAS_ROADMAP.md) в соседнем репозитории.
-> Дальше по плану: P7 (Sentry/OTel, MFA, WAF, аудит, GDPR, Kubernetes), P8 (остальные интеграции).
+> Дальше по плану: P8 (остальные интеграции: LinkedIn/X/YouTube/TikTok/Pinterest/Bluesky/Mastodon/Threads).
 
 ## Структура
 
@@ -130,6 +130,19 @@ Social Accounts, Settings (голос бренда и ротация ключе�
 - В UI — вкладка Billing с текущим тарифом и кнопками выбора плана.
 
 > Для локальной разработки без Stripe можно оставить тариф `free`: лимит 2 аккаунта работает без внешних вызовов.
+
+## Безопасность и эксплуатация (P7)
+
+- **MFA**: TOTP (RFC 6238) без внешних зависимостей — `POST /auth/mfa/setup`, `/enable`, `/disable`; при включённом
+  MFA вход без 6-значного кода невозможен. Секрет показывается как `otpauth://` URI.
+- **Rate limiting**: глобально 120 запросов/минуту, на `/auth/login` — 5, на `/auth/register` — 3.
+- **Аудит**: `AuditInterceptor` записывает все изменяющие запросы с `org_id`, `actor_id`, статусом и IP (кроме webhook).
+- **Наблюдаемость**: Sentry (`SENTRY_DSN`) и OpenTelemetry (`OTEL_ENABLED=true`) инициализируются до запуска Nest.
+- **GDPR**: `GET /privacy/export` (все данные организации без сырых секретов) и `DELETE /privacy/organization`
+  (каскадное удаление). Кнопки есть в Settings.
+- **Бэкапы**: `scripts/backup.sh` — `pg_dump` + gzip, ротация и опциональная загрузка в S3.
+- **Kubernetes**: манифесты в `k8s/` (deployments, services, ingress, configmap). Секреты создаются отдельно
+  как `gridpost-secrets` и не хранятся в git.
 
 Electron из старого репозитория остаётся необязательным клиентом; перенос его в тонкую обёртку над API — отдельная
 задача после P4/P5.
