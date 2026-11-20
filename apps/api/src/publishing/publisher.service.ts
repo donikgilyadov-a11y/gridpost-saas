@@ -80,6 +80,9 @@ export class PublisherService {
       })
       const variants = post.variants as unknown as VariantMap
       const thread = variants[payload.lang] ?? Object.values(variants)[0] ?? []
+      const media = (post.media as unknown as Array<{ url: string; mime: string; alt?: string }>) ?? []
+      const imageUrl = media.find((item) => item.mime.startsWith('image/'))?.url
+      const videoUrl = media.find((item) => item.mime.startsWith('video/'))?.url
 
       let outcome: { remoteId: string; url?: string }
       switch (payload.platform) {
@@ -99,7 +102,8 @@ export class PublisherService {
             token,
             igUserId: metadata.igUserId,
             caption: thread.join('\n\n'),
-            ...(typeof metadata.imageUrl === 'string' ? { imageUrl: metadata.imageUrl } : {})
+            ...(imageUrl ? { imageUrl } : typeof metadata.imageUrl === 'string' ? { imageUrl: metadata.imageUrl } : {}),
+            ...(videoUrl ? { videoUrl } : {})
           })
           break
         }
@@ -108,7 +112,7 @@ export class PublisherService {
             token,
             text: thread.join('\n\n'),
             ...(typeof metadata.authorUrn === 'string' ? { authorUrn: metadata.authorUrn } : {}),
-            ...(typeof metadata.imageUrl === 'string' ? { imageUrl: metadata.imageUrl } : {})
+            ...(imageUrl ? { imageUrl } : typeof metadata.imageUrl === 'string' ? { imageUrl: metadata.imageUrl } : {})
           })
           break
         }
@@ -140,19 +144,26 @@ export class PublisherService {
         }
         case 'threads': {
           if (typeof metadata.userId !== 'string') throw new UnrecoverableError('Threads userId is missing')
-          outcome = await publishThreads({ token, userId: metadata.userId, text: thread.join('\n\n') })
+          outcome = await publishThreads({
+            token,
+            userId: metadata.userId,
+            text: thread.join('\n\n'),
+            ...(imageUrl ? { imageUrl } : {})
+          })
           break
         }
         case 'pinterest': {
-          if (typeof metadata.boardId !== 'string' || typeof metadata.imageUrl !== 'string') {
+          const boardId = metadata.boardId
+          const pinImage = imageUrl ?? (typeof metadata.imageUrl === 'string' ? metadata.imageUrl : undefined)
+          if (typeof boardId !== 'string' || !pinImage) {
             throw new UnrecoverableError('Pinterest boardId and imageUrl are required')
           }
           outcome = await publishPinterest({
             token,
-            boardId: metadata.boardId,
+            boardId,
             title: thread[0]?.slice(0, 100) ?? 'Gridpost',
             description: thread.join('\n\n'),
-            imageUrl: metadata.imageUrl
+            imageUrl: pinImage
           })
           break
         }

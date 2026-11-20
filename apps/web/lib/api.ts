@@ -130,6 +130,27 @@ export interface Recommendation {
   priority: 'high' | 'medium' | 'low'
 }
 
+export interface MediaAssetView {
+  id: string
+  name: string
+  mime: string
+  size: number
+  url: string
+  alt: string | null
+  createdAt: string
+}
+
+export const media = {
+  list: () => api<MediaAssetView[]>('/media'),
+  presign: (input: { name: string; mime: string; size: number; alt?: string }) =>
+    api<{ id: string; uploadUrl: string; url: string; method: 'PUT' }>('/media/presign', {
+      method: 'POST',
+      body: JSON.stringify(input)
+    }),
+  confirm: (id: string) => api<MediaAssetView>(`/media/${id}/confirm`, { method: 'POST', body: '{}' }),
+  remove: (id: string) => api<{ deleted: true }>(`/media/${id}`, { method: 'DELETE' })
+}
+
 export interface Subscription {
   plan: string
   status: string

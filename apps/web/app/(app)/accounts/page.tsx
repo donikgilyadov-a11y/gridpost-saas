@@ -58,6 +58,8 @@ export default function AccountsPage() {
         <div className="row">
           <button className="primary small" onClick={() => void oauth('facebook')}>Подключить Facebook Pages</button>
           <button className="primary small" onClick={() => void oauth('instagram')}>Подключить Instagram Business</button>
+          <button className="ghost small" onClick={() => void oauth('linkedin')}>LinkedIn</button>
+          <button className="ghost small" onClick={() => void oauth('x')}>X (Twitter)</button>
         </div>
       </div>
 

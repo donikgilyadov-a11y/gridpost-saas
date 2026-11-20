@@ -13,6 +13,7 @@ import { AiModule } from './ai/ai.module'
 import { AnalyticsModule } from './analytics/analytics.module'
 import { BillingModule } from './billing/billing.module'
 import { PrivacyModule } from './privacy/privacy.module'
+import { MediaModule } from './media/media.module'
 import { HealthController } from './health/health.controller'
 import { AuditInterceptor } from './audit/audit.interceptor'
 
@@ -30,7 +31,8 @@ import { AuditInterceptor } from './audit/audit.interceptor'
     AiModule,
     AnalyticsModule,
     BillingModule,
-    PrivacyModule
+    PrivacyModule,
+    MediaModule
   ],
   controllers: [HealthController],
   providers: [

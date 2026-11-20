@@ -12,6 +12,7 @@ export interface CreatePostInput {
   variants: Record<string, string[]>
   targets: { accountId: string; lang: string }[]
   scheduledAt?: Date
+  mediaIds?: string[]
 }
 
 @Injectable()
@@ -22,8 +23,16 @@ export class PostsService {
     private readonly billing: BillingService
   ) {}
 
+  private async resolveMedia(organizationId: string, ids: string[] = []) {
+    if (!ids.length) return []
+    return this.prisma.withOrg(organizationId, (tx) =>
+      tx.mediaAsset.findMany({ where: { organizationId, id: { in: ids } } })
+    )
+  }
+
   async create(input: CreatePostInput) {
     const limits = await this.billing.limitsFor(input.organizationId)
+    const media = await this.resolveMedia(input.organizationId, input.mediaIds)
     const accountCount = await this.prisma.withOrg(input.organizationId, (tx) =>
       tx.socialAccount.count({ where: { organizationId: input.organizationId } })
     )
@@ -46,6 +55,7 @@ export class PostsService {
           organizationId: input.organizationId,
           authorId: input.authorId,
           variants: input.variants as unknown as Prisma.InputJsonValue,
+          media: media as unknown as Prisma.InputJsonValue,
           idempotencyKey,
           scheduledAt: input.scheduledAt,
           status: input.scheduledAt ? 'SCHEDULED' : 'QUEUED',
@@ -77,6 +87,7 @@ export class PostsService {
 
   /** AI output lands here: nothing is published without an explicit user action. */
   async createDraft(input: CreatePostInput) {
+    const media = await this.resolveMedia(input.organizationId, input.mediaIds)
     const window = input.scheduledAt?.toISOString().slice(0, 16) ?? 'draft'
     const idempotencyKey = makeIdempotencyKey(input.organizationId, input.key, 'draft', window)
     return this.prisma.withOrg(input.organizationId, async (tx) => {
@@ -90,6 +101,7 @@ export class PostsService {
           organizationId: input.organizationId,
           authorId: input.authorId,
           variants: input.variants as unknown as Prisma.InputJsonValue,
+          media: media as unknown as Prisma.InputJsonValue,
           idempotencyKey,
           scheduledAt: input.scheduledAt,
           status: 'DRAFT',

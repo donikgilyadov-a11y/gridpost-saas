@@ -150,9 +150,19 @@ X (API v2, треды через reply), Bluesky (atproto `createRecord`, reply-
 Threads (Threads API), Pinterest (Pins API) — плюс YouTube и TikTok, которые через официальные API принимают
 **только видео**: эти два адаптера возвращают понятную permanent-ошибку до появления S3-пайплайна загрузки файлов.
 
-Матрица возможностей и ограничений — `PLATFORM_CAPABILITIES` в `packages/shared`. OAuth-конфигурации пока
-покрывают Facebook/Instagram; для остальных площадок подключение идёт через переданный токен и `metadata`
-(authorUrn, handle, pds, host, userId, boardId, imageUrl и т.д.). Их provider-specific OAuth-экраны — следующий шаг.
+Матрица возможностей и ограничений — `PLATFORM_CAPABILITIES` в `packages/shared`.
+
+## Медиа и OAuth следующих площадок
+
+- **S3-медиатека**: `POST /media/presign` возвращает presigned PUT URL (15 минут, ContentType зафиксирован),
+  `POST /media/:id/confirm` проверяет объект через `HeadObject`, `GET /media` и `DELETE /media/:id` — список и удаление.
+  Файлы лежат по ключу `orgId/uuid-name`, BOM и лимит 50 МБ проверяются на сервере.
+- Медиа из медиатеки привязываются к посту через `mediaIds`; воркер передаёт `imageUrl`/`videoUrl` в адаптеры
+  Instagram, LinkedIn, Threads, Pinterest (фото) и Telegram при наличии.
+- **OAuth**: добавлены LinkedIn (`w_member_social`, body token exchange, `urn:li:person` из userinfo) и X
+  (PKCE + Basic auth, `/2/users/me`). Facebook/Instagram работают через Graph API. Остальные площадки пока
+  подключаются токеном и `metadata` (handle, pds, host, userId, boardId).
+- YouTube/TikTok по-прежнему требуют resumable video upload — адаптеры честно возвращают permanent-ошибку.
 
 Electron из старого репозитория остаётся необязательным клиентом; перенос его в тонкую обёртку над API — отдельная
 задача после P4/P5.

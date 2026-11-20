@@ -7,7 +7,8 @@ const createPostSchema = z.object({
   key: z.string().min(8).max(100),
   variants: z.record(z.array(z.string().min(1))),
   targets: z.array(z.object({ accountId: z.string().uuid(), lang: z.string().min(2).max(8) })).min(1),
-  scheduledAt: z.string().datetime().optional()
+  scheduledAt: z.string().datetime().optional(),
+  mediaIds: z.array(z.string().uuid()).max(20).optional()
 })
 
 type CreatePostDto = z.infer<typeof createPostSchema>
@@ -25,7 +26,8 @@ export class PostsController {
       key: dto.key,
       variants: dto.variants,
       targets: dto.targets,
-      scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined
+      scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+      mediaIds: dto.mediaIds
     })
   }
 

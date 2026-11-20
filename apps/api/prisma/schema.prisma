@@ -66,6 +66,7 @@ model Organization {
   oauthStates    OAuthState[]
   metrics        MetricSnapshot[]
   subscription   Subscription?
+  mediaAssets    MediaAsset[]
 
   @@map("organizations")
 }
@@ -207,6 +208,23 @@ model AuditLog {
 
   @@index([organizationId, createdAt])
   @@map("audit_logs")
+}
+
+model MediaAsset {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  name           String
+  mime           String
+  size           Int
+  url            String
+  alt            String?
+  createdBy      String?  @db.Uuid
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@map("media_assets")
 }
 
 model Subscription {

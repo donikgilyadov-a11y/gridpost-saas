@@ -27,7 +27,8 @@ const planSchema = z.object({
 
 const draftSchema = z.object({
   variants: z.record(z.array(z.string().min(1))),
-  targets: z.array(z.object({ accountId: z.string().uuid(), lang: z.string().min(2).max(8) })).min(1)
+  targets: z.array(z.object({ accountId: z.string().uuid(), lang: z.string().min(2).max(8) })).min(1),
+  mediaIds: z.array(z.string().uuid()).max(20).optional()
 })
 
 @Controller('ai')
@@ -69,14 +70,16 @@ export class AiController {
   draft(
     @CurrentOrg() organizationId: string,
     @CurrentUser() user: AuthUser,
-    @Body(new ZodPipe(draftSchema)) body: { variants: Record<string, string[]>; targets: { accountId: string; lang: string }[] }
+    @Body(new ZodPipe(draftSchema))
+    body: { variants: Record<string, string[]>; targets: { accountId: string; lang: string }[]; mediaIds?: string[] }
   ) {
     return this.posts.createDraft({
       organizationId,
       authorId: user.userId,
       key: randomUUID(),
       variants: body.variants,
-      targets: body.targets
+      targets: body.targets,
+      mediaIds: body.mediaIds
     })
   }
 }

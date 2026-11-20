@@ -21,3 +21,5 @@
   организации, бэкап-скрипт, Kubernetes-манифесты, тесты TOTP.
 - **P8**: адаптеры LinkedIn, X, Bluesky, Mastodon, Threads, Pinterest, YouTube и TikTok; dispatcher воркера
   на 11 площадок; permanent-ошибки для API, не поддерживающих текст; тесты X/Mastodon/Bluesky на моках.
+- **P8b**: S3-медиатека с presigned загрузкой, привязка медиа к постам, OAuth для LinkedIn и X (PKCE/Basic),
+  вкладка Media и выбор файлов в композере, тесты OAuth-конфигураций.

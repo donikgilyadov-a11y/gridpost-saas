@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { accounts, posts, type SocialAccountView } from '@/lib/api'
+import { accounts, media, posts, type MediaAssetView, type SocialAccountView } from '@/lib/api'
 
 export default function CreatePost() {
   const router = useRouter()
@@ -11,6 +11,8 @@ export default function CreatePost() {
   const [texts, setTexts] = useState<Record<string, string>>({ RU: '', EN: '' })
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [langFor, setLangFor] = useState<Record<string, string>>({})
+  const [mediaItems, setMediaItems] = useState<MediaAssetView[]>([])
+  const [chosenMedia, setChosenMedia] = useState<Record<string, boolean>>({})
   const [scheduledAt, setScheduledAt] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -22,6 +24,7 @@ export default function CreatePost() {
       for (const item of items) langMap[item.id] = 'RU'
       setLangFor(langMap)
     }).catch((err: Error) => setError(err.message))
+    void media.list().then(setMediaItems).catch(() => undefined)
   }, [])
 
   function toggleLang(lang: string) {
@@ -49,6 +52,7 @@ export default function CreatePost() {
         key: crypto.randomUUID(),
         variants,
         targets,
+        mediaIds: Object.entries(chosenMedia).filter(([, on]) => on).map(([id]) => id),
         ...(scheduledAt ? { scheduledAt: new Date(scheduledAt).toISOString() } : {})
       })
       router.replace('/dashboard')
@@ -92,6 +96,18 @@ export default function CreatePost() {
                 {langs.map((lang) => <option key={lang} value={lang}>{lang}</option>)}
               </select>
             </div>
+          ))}
+        </div>
+
+        <div className="card">
+          <h2>Медиа из медиатеки</h2>
+          {!mediaItems.length && <div className="dim small">Медиа нет — загрузите в разделе Media.</div>}
+          {mediaItems.map((item) => (
+            <label className="row small" key={item.id} style={{ padding: '6px 0', borderBottom: '1px solid var(--line)' }}>
+              <input type="checkbox" checked={Boolean(chosenMedia[item.id])} onChange={(e) => setChosenMedia({ ...chosenMedia, [item.id]: e.target.checked })} />
+              <span className="pill">{item.mime.startsWith('video/') ? 'видео' : 'фото'}</span>
+              <span className="grow">{item.name}</span>
+            </label>
           ))}
         </div>
 
