@@ -105,6 +105,8 @@ model SocialAccount {
   displayName    String
   tokenCipher    Bytes
   tokenIv        Bytes
+  /// Platform-specific non-secret settings: chatId, pageId, igUserId, ...
+  metadata       Json     @default("{}")
   scopes         String[]
   expiresAt      DateTime?
   status         AccountStatus @default(ACTIVE)

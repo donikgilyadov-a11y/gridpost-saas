@@ -27,7 +27,7 @@ BEGIN
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
     EXECUTE format('DROP POLICY IF EXISTS org_isolation ON %I', t);
     EXECUTE format(
-      'CREATE POLICY org_isolation ON %I USING (organization_id = app_current_org()) WITH CHECK (organization_id = app_current_org())',
+      'CREATE POLICY org_isolation ON %I USING (organization_id = app_current_org() OR current_setting(''app.system'', true) = ''on'') WITH CHECK (organization_id = app_current_org() OR current_setting(''app.system'', true) = ''on'')',
       t
     );
   END LOOP;
@@ -38,10 +38,14 @@ ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organizations FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS org_self ON organizations;
 CREATE POLICY org_self ON organizations
-  USING (id = app_current_org()) WITH CHECK (id = app_current_org());
+  USING (id = app_current_org() OR current_setting('app.system', true) = 'on')
+  WITH CHECK (id = app_current_org() OR current_setting('app.system', true) = 'on');
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS user_self ON users;
 CREATE POLICY user_self ON users
-  USING (id IN (SELECT user_id FROM memberships WHERE organization_id = app_current_org()));
+  USING (
+    current_setting('app.system', true) = 'on'
+    OR id IN (SELECT user_id FROM memberships WHERE organization_id = app_current_org())
+  );

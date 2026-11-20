@@ -12,15 +12,15 @@ export type PlatformId =
   | 'threads'
 
 export type PostStatus =
-  | 'draft'
-  | 'scheduled'
-  | 'queued'
-  | 'publishing'
-  | 'published'
-  | 'failed'
-  | 'skipped'
+  | 'DRAFT'
+  | 'SCHEDULED'
+  | 'QUEUED'
+  | 'PUBLISHING'
+  | 'PUBLISHED'
+  | 'FAILED'
+  | 'SKIPPED'
 
-export type TargetStatus = 'pending' | 'queued' | 'publishing' | 'published' | 'failed' | 'skipped'
+export type TargetStatus = 'PENDING' | 'QUEUED' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED' | 'SKIPPED'
 
 export const PLATFORM_PRIORITY: Record<PlatformId, 0 | 1 | 2> = {
   telegram: 0,
@@ -53,6 +53,7 @@ export interface PublishJobPayload {
   targetId: string
   accountId: string
   platform: PlatformId
+  lang: string
   /** Stable across retries; used for de-duplication. */
   idempotencyKey: string
   scheduledAt?: string

@@ -25,6 +25,7 @@ jobs:
       DATABASE_URL: postgresql://gridpost:gridpost@localhost:5432/gridpost?schema=public
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: ci-test-secret-at-least-32-bytes-long
+      TOKEN_MASTER_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,4 +35,5 @@ jobs:
       - run: npm ci
       - run: npm run prisma:generate
       - run: npm run typecheck
+      - run: npm test
       - run: npm run build

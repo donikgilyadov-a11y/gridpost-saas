@@ -18,6 +18,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async withOrg<T>(organizationId: string, fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return this.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT set_config('app.org_id', ${organizationId}, true)`
+      await tx.$executeRaw`SELECT set_config('app.system', 'off', true)`
+      return fn(tx)
+    })
+  }
+
+  /** For background jobs that must scan across organizations. */
+  async withSystem<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    return this.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.system', 'on', true)`
       return fn(tx)
     })
   }
