@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: ghcr.io/donikgilyadov-a11y/gridpost-saas-web:v0.1.0
+          image: ghcr.io/donikgilyadov-a11y/gridpost-saas-web:v0.1.1
           ports: [{ containerPort: 3000 }]
           env:
             - name: NEXT_PUBLIC_API_URL

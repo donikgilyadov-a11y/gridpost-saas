@@ -92,8 +92,11 @@ export default function SettingsPage() {
     setBusy(true)
     setMessage('')
     try {
-      const result = await api<{ rotated: number }>('/organizations/current/rotate-keys', { method: 'POST' })
-      setMessage(`Ключ organizations ротирован, перешифровано токенов: ${result.rotated}`)
+      const result = await api<{ version: number; rotated: number; failed: string[] }>(
+        '/organizations/current/rotate-keys',
+        { method: 'POST', body: '{}' }
+      )
+      setMessage(`Ротация → v${result.version}: перешифровано ${result.rotated}, ошибок ${result.failed.length}. Повторный вызов продолжит незавершённые записи.`)
     } catch (err) {
       setMessage((err as Error).message)
     } finally {

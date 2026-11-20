@@ -87,36 +87,75 @@ export class SecretsService implements OnModuleInit {
     return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8')
   }
 
-  /** Creates a new organization data key and re-encrypts all stored tokens. */
-  async rotate(organizationId: string): Promise<number> {
-    const currentVersion = (await this.key(organizationId)).version
-    const generated = await this.provider.generateDataKey()
-    const newVersion = currentVersion + 1
-    await this.prisma.withOrg(organizationId, (tx) =>
-      tx.organizationKey.create({
-        data: { organizationId, version: newVersion, ciphertext: generated.ciphertext }
+  /**
+   * Idempotent, resumable rotation. The target key version is deterministic,
+   * so a repeated call after a partial failure continues the remaining tokens.
+   */
+  async rotate(organizationId: string): Promise<{ version: number; rotated: number; failed: string[] }> {
+    const current = await this.key(organizationId)
+    let accounts = await this.prisma.withOrg(organizationId, (tx) =>
+      tx.socialAccount.findMany({
+        where: { organizationId, keyVersion: { not: current.version } }
       })
     )
-    this.cache.set(`${organizationId}:${newVersion}`, generated.plaintext)
 
-    const accounts = await this.prisma.withOrg(organizationId, (tx) =>
-      tx.socialAccount.findMany({ where: { organizationId } })
-    )
-    for (const account of accounts) {
-      const plaintext = await this.decrypt(organizationId, {
-        cipher: account.tokenCipher,
-        iv: account.tokenIv,
-        keyVersion: account.keyVersion
-      })
-      const sealed = await this.encrypt(organizationId, plaintext)
+    // If a previous run left tokens on an older key, continue with that key.
+    const targetVersion = accounts.length ? current.version : current.version + 1
+    if (!accounts.length) {
+      const generated = await this.provider.generateDataKey()
       await this.prisma.withOrg(organizationId, (tx) =>
-        tx.socialAccount.update({
-          where: { id: account.id },
-          data: { tokenCipher: sealed.cipher, tokenIv: sealed.iv, keyVersion: sealed.keyVersion }
+        tx.organizationKey.create({
+          data: { organizationId, version: targetVersion, ciphertext: generated.ciphertext }
+        })
+      )
+      this.cache.set(`${organizationId}:${targetVersion}`, generated.plaintext)
+      accounts = await this.prisma.withOrg(organizationId, (tx) =>
+        tx.socialAccount.findMany({
+          where: { organizationId, keyVersion: { not: targetVersion } }
         })
       )
     }
-    this.logger.log(`rotated org ${organizationId} key to v${newVersion} (${accounts.length} tokens)`)
-    return accounts.length
+    const failed: string[] = []
+    let rotated = 0
+    for (const account of accounts) {
+      try {
+        const plaintext = await this.decrypt(organizationId, {
+          cipher: account.tokenCipher,
+          iv: account.tokenIv,
+          keyVersion: account.keyVersion
+        })
+        const sealed = await this.encrypt(organizationId, plaintext)
+        let refreshFields: Record<string, unknown> = {}
+        if (account.refreshTokenCipher && account.refreshTokenIv && account.refreshTokenKeyVersion) {
+          const refreshPlain = await this.decrypt(organizationId, {
+            cipher: account.refreshTokenCipher,
+            iv: account.refreshTokenIv,
+            keyVersion: account.refreshTokenKeyVersion
+          })
+          const refreshSealed = await this.encrypt(organizationId, refreshPlain)
+          refreshFields = {
+            refreshTokenCipher: refreshSealed.cipher,
+            refreshTokenIv: refreshSealed.iv,
+            refreshTokenKeyVersion: refreshSealed.keyVersion
+          }
+        }
+        await this.prisma.withOrg(organizationId, (tx) =>
+          tx.socialAccount.updateMany({
+            where: { id: account.id, keyVersion: account.keyVersion },
+            data: {
+              tokenCipher: sealed.cipher,
+              tokenIv: sealed.iv,
+              keyVersion: sealed.keyVersion,
+              ...refreshFields
+            }
+          })
+        )
+        rotated += 1
+      } catch (error) {
+        failed.push(`${account.id}: ${(error as Error).message}`)
+      }
+    }
+    this.logger.log(`rotation org ${organizationId} → v${targetVersion}: ${rotated} ok, ${failed.length} failed`)
+    return { version: targetVersion, rotated, failed }
   }
 }

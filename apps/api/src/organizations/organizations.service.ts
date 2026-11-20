@@ -7,11 +7,14 @@ export class OrganizationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   listForUser(userId: string) {
-    return this.prisma.membership.findMany({
-      where: { userId },
-      include: { organization: true },
-      orderBy: { createdAt: 'asc' }
-    })
+    // Cross-organization bootstrap lookup: must run in system context.
+    return this.prisma.withSystem((tx) =>
+      tx.membership.findMany({
+        where: { userId },
+        include: { organization: true },
+        orderBy: { createdAt: 'asc' }
+      })
+    )
   }
 
   current(organizationId: string) {
@@ -21,7 +24,7 @@ export class OrganizationsService {
   }
 
   async createForUser(userId: string, name: string, slug: string) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.withSystem(async (tx) => {
       const organization = await tx.organization.create({ data: { name, slug } })
       await tx.membership.create({
         data: { organizationId: organization.id, userId, role: 'OWNER' }
@@ -40,7 +43,9 @@ export class OrganizationsService {
   }
 
   async invite(organizationId: string, email: string, role: 'ADMIN' | 'MEMBER') {
-    const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase() } })
+    const user = await this.prisma.withSystem((tx) =>
+      tx.user.findUnique({ where: { email: email.toLowerCase() } })
+    )
     if (!user) throw new Error('Пользователь с таким email не зарегистрирован')
     return this.prisma.withOrg(organizationId, (tx) =>
       tx.membership.upsert({

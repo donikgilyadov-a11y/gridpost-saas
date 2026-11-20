@@ -30,7 +30,12 @@ export class PublisherService {
   ) {}
 
   async process(payload: PublishJobPayload): Promise<void> {
-    const targetBefore = await this.prisma.postTarget.findUnique({ where: { id: payload.targetId } })
+    // Worker has no request context — always scope by the job's organization.
+    const targetBefore = await this.prisma.withOrg(payload.organizationId, (tx) =>
+      tx.postTarget.findUnique({
+        where: { id: payload.targetId, organizationId: payload.organizationId }
+      })
+    )
     if (!targetBefore) throw new UnrecoverableError('PostTarget not found')
     // Idempotency: a published target is never sent twice, even if the job repeats.
     if (targetBefore.status === 'PUBLISHED') {

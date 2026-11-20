@@ -10,6 +10,7 @@ export interface ConnectAccountInput {
   externalId: string
   displayName: string
   token: string
+  refreshToken?: string
   metadata?: Record<string, unknown>
   scopes?: string[]
   expiresAt?: Date
@@ -69,6 +70,16 @@ export class SocialAccountsService {
       }
     }
     const sealed = await this.secrets.encrypt(input.organizationId, input.token)
+    const refresh = input.refreshToken
+      ? await this.secrets.encrypt(input.organizationId, input.refreshToken)
+      : null
+    const refreshFields = refresh
+      ? {
+          refreshTokenCipher: refresh.cipher,
+          refreshTokenIv: refresh.iv,
+          refreshTokenKeyVersion: refresh.keyVersion
+        }
+      : {}
     return this.prisma.withOrg(input.organizationId, (tx) =>
       tx.socialAccount.upsert({
         where: {
@@ -86,6 +97,7 @@ export class SocialAccountsService {
           tokenCipher: sealed.cipher,
           tokenIv: sealed.iv,
           keyVersion: sealed.keyVersion,
+          ...refreshFields,
           metadata: (input.metadata ?? {}) as object,
           scopes: input.scopes ?? [],
           expiresAt: input.expiresAt,
@@ -96,6 +108,7 @@ export class SocialAccountsService {
           tokenCipher: sealed.cipher,
           tokenIv: sealed.iv,
           keyVersion: sealed.keyVersion,
+          ...refreshFields,
           metadata: (input.metadata ?? {}) as object,
           scopes: input.scopes ?? [],
           expiresAt: input.expiresAt,

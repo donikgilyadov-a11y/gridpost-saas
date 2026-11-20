@@ -13,8 +13,9 @@ DO $$
 DECLARE
   t text;
 BEGIN
+  -- NOTE: `organizations` and `users` have no organization_id column.
+  -- They get dedicated policies below and must NOT be in this loop.
   FOREACH t IN ARRAY ARRAY[
-    'organizations',
     'memberships',
     'social_accounts',
     'posts',

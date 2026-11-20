@@ -71,8 +71,12 @@ export class OrganizationsController {
 
   @Post('current/rotate-keys')
   async rotateKeys(@CurrentUser() user: AuthUser, @CurrentOrg() organizationId: string) {
-    const rotated = await this.secrets.rotate(organizationId)
-    await this.organizations.audit(user, 'organization.rotateKeys', organizationId, { tokens: rotated })
-    return { rotated }
+    const result = await this.secrets.rotate(organizationId)
+    await this.organizations.audit(user, 'organization.rotateKeys', organizationId, {
+      version: result.version,
+      rotated: result.rotated,
+      failed: result.failed.length
+    })
+    return result
   }
 }

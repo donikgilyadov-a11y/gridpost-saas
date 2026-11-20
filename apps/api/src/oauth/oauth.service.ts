@@ -17,7 +17,6 @@ interface Identity {
   id: string
   name: string
   metadata: Record<string, unknown>
-  refreshToken?: string
 }
 
 function base64url(value: Buffer): string {
@@ -87,10 +86,8 @@ export class OAuthService {
       displayName: identity.name,
       token: data.access_token,
       scopes: data.scope?.split(' ') ?? provider.scopes,
-      metadata: {
-        ...identity.metadata,
-        ...(data.refresh_token ? { refreshToken: data.refresh_token } : {})
-      },
+      metadata: identity.metadata,
+      refreshToken: data.refresh_token,
       expiresAt
     })
   }

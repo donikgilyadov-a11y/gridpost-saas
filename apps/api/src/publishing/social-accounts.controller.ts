@@ -8,6 +8,7 @@ const connectSchema = z.object({
   externalId: z.string().min(1).max(100),
   displayName: z.string().min(1).max(100),
   token: z.string().min(1),
+  refreshToken: z.string().min(1).optional(),
   metadata: z.record(z.unknown()).optional(),
   scopes: z.array(z.string()).optional()
 })

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1 — Security & Reliability Audit
+
+- RLS: organizations/users исключены из общего цикла политик; bootstrap-запросы авторизации переведены на `withSystem`.
+- Refresh-токены OAuth шифруются отдельно и больше не попадают в `metadata`, API и GDPR-экспорт.
+- Ротация ключей идемпотентна и восстанавливаема после частичного сбоя.
+- Воркер читает задачи в контексте организации; добавлены аудит-тесты (19/19) и live-smoke-тесты.
+- Отчёт: `docs/SECURITY_AUDIT.md`.
+
 ## 0.1.0 (P0 + P1)
 
 - **P0**: монорепозиторий, NestJS API, Prisma-схема organizations/users/accounts/posts/targets/audit,

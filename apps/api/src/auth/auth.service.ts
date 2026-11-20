@@ -16,13 +16,16 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<{ token: string; user: { id: string; email: string }; organizationId: string }> {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } })
+    const existing = await this.prisma.withSystem((tx) =>
+      tx.user.findUnique({ where: { email: dto.email.toLowerCase() } })
+    )
     if (existing) throw new ConflictException('Пользователь уже существует')
 
     const passwordHash = await bcrypt.hash(dto.password, 12)
     const slug = await this.uniqueSlug(dto.organizationName)
 
-    const result = await this.prisma.$transaction(async (tx) => {
+    // Registration is a bootstrap operation: no org context exists yet.
+    const result = await this.prisma.withSystem(async (tx) => {
       const user = await tx.user.create({
         data: { email: dto.email.toLowerCase(), passwordHash, displayName: dto.displayName }
       })
@@ -43,10 +46,12 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<{ token: string; user: { id: string; email: string }; organizationId: string }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
-      include: { memberships: { orderBy: { createdAt: 'asc' } } }
-    })
+    const user = await this.prisma.withSystem((tx) =>
+      tx.user.findUnique({
+        where: { email: dto.email.toLowerCase() },
+        include: { memberships: { orderBy: { createdAt: 'asc' } } }
+      })
+    )
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('Неверный email или пароль')
     }
@@ -72,28 +77,38 @@ export class AuthService {
 
   async setupMfa(userId: string, email: string) {
     const secret = generateTotpSecret()
-    await this.prisma.user.update({ where: { id: userId }, data: { mfaSecret: secret } })
+    await this.prisma.withSystem((tx) =>
+      tx.user.update({ where: { id: userId }, data: { mfaSecret: secret } })
+    )
     return { secret, otpauthUrl: otpauthUrl(email, secret) }
   }
 
   async enableMfa(userId: string, code: string) {
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } })
+    const user = await this.prisma.withSystem((tx) =>
+      tx.user.findUniqueOrThrow({ where: { id: userId } })
+    )
     if (!user.mfaSecret || !verifyTotp(user.mfaSecret, code)) {
       throw new UnauthorizedException('Неверный код MFA')
     }
-    await this.prisma.user.update({ where: { id: userId }, data: { mfaEnabled: true } })
+    await this.prisma.withSystem((tx) =>
+      tx.user.update({ where: { id: userId }, data: { mfaEnabled: true } })
+    )
     return { enabled: true }
   }
 
   async disableMfa(userId: string, code: string) {
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } })
+    const user = await this.prisma.withSystem((tx) =>
+      tx.user.findUniqueOrThrow({ where: { id: userId } })
+    )
     if (!user.mfaSecret || !verifyTotp(user.mfaSecret, code)) {
       throw new UnauthorizedException('Неверный код MFA')
     }
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { mfaEnabled: false, mfaSecret: null }
-    })
+    await this.prisma.withSystem((tx) =>
+      tx.user.update({
+        where: { id: userId },
+        data: { mfaEnabled: false, mfaSecret: null }
+      })
+    )
     return { enabled: false }
   }
 
@@ -114,7 +129,7 @@ export class AuthService {
       .slice(0, 40) || 'org'
     let slug = base
     let attempt = 0
-    while (await this.prisma.organization.findUnique({ where: { slug } })) {
+    while (await this.prisma.withSystem((tx) => tx.organization.findUnique({ where: { slug } }))) {
       attempt += 1
       slug = `${base}-${attempt}`
     }

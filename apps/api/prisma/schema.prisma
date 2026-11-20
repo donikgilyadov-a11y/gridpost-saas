@@ -117,6 +117,10 @@ model SocialAccount {
   tokenIv        Bytes
   /// Version of the organization data key used for this token.
   keyVersion     Int       @default(1)
+  /// Refresh token is encrypted separately and NEVER exposed via metadata/API.
+  refreshTokenCipher    Bytes?
+  refreshTokenIv        Bytes?
+  refreshTokenKeyVersion Int?
   clientId       String?   @db.Uuid
   /// Platform-specific non-secret settings: chatId, pageId, igUserId, ...
   metadata       Json     @default("{}")

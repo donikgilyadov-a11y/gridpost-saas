@@ -4,7 +4,7 @@ Server-centric multi-tenant SaaS: PostgreSQL + RLS, JWT, Prisma, Redis/BullMQ, �
 11 адаптеров соцсетей, OAuth 2.0, KMS, Next.js, AI Studio, аналитика, Stripe, MFA, аудит и наблюдаемость.
 
 > Дорожная карта: [docs/SAAS_ROADMAP.md](../ai-os-new-main/blob/main/docs/SAAS_ROADMAP.md) в соседнем репозитории.
-> Продакшн-деплой: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+> Продакшн-деплой: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Аудит: [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md).
 
 ## Структура
 
@@ -186,11 +186,11 @@ Threads (Threads API), Pinterest (Pins API) — плюс YouTube и TikTok, ко
 Локальный запуск: `docker compose up -d`, `npm install`, `npm run prisma:generate`, миграции, `npm run dev:api`
 и `npm run dev:web`.
 
-Образы из релиза `v0.1.0`:
+Образы из релиза `v0.1.1`:
 
 ```bash
-docker pull ghcr.io/donikgilyadov-a11y/gridpost-saas-api:v0.1.0
-docker pull ghcr.io/donikgilyadov-a11y/gridpost-saas-web:v0.1.0
+docker pull ghcr.io/donikgilyadov-a11y/gridpost-saas-api:v0.1.1
+docker pull ghcr.io/donikgilyadov-a11y/gridpost-saas-web:v0.1.1
 kubectl apply -f k8s/
 ```
 
