@@ -8,6 +8,7 @@ interface JwtPayload {
   sub: string
   orgId: string
   role: AuthUser['role']
+  email?: string
 }
 
 @Injectable()
@@ -21,6 +22,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<AuthUser> {
-    return { userId: payload.sub, organizationId: payload.orgId, role: payload.role }
+    return { userId: payload.sub, organizationId: payload.orgId, role: payload.role, email: payload.email }
   }
 }

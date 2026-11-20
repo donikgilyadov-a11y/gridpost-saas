@@ -1,10 +1,10 @@
-# Gridpost SaaS — P0–P5 foundation
+# Gridpost SaaS — P0–P6 foundation
 
 Server-centric multi-tenant SaaS: PostgreSQL + RLS, JWT, Prisma, Redis/BullMQ, облачная публикация 24/7,
-OAuth 2.0, KMS-шифрование токенов, веб-клиент Next.js, AI Content Studio и центр аналитики.
+OAuth 2.0, KMS, Next.js, AI Studio, аналитика и Stripe-биллинг.
 
 > Дорожная карта: [docs/SAAS_ROADMAP.md](../ai-os-new-main/blob/main/docs/SAAS_ROADMAP.md) в соседнем репозитории.
-> Дальше по плану: P6 (Stripe, тарифы и лимиты), P7 (Sentry/OTel, MFA, GDPR, Kubernetes).
+> Дальше по плану: P7 (Sentry/OTel, MFA, WAF, аудит, GDPR, Kubernetes), P8 (остальные интеграции).
 
 ## Структура
 
@@ -116,6 +116,20 @@ Social Accounts, Settings (голос бренда и ротация ключе�
   по площадкам; `nullable` поля означают, что метрику площадка не отдаёт.
 - `GET /analytics/recommendations` — AI-агент анализирует сводку и возвращает конкретные действия с приоритетом.
 - В UI — вкладка Analytics с синхронизацией, карточками метрик и рекомендациями.
+
+## Биллинг (P6)
+
+- Модель `Subscription` (Stripe customer/subscription, тариф, статус, конец периода).
+- `GET /billing/plans` — тарифы Free/Starter/Pro/Business/Agency/Enterprise, `GET /billing/subscription` — текущий.
+- `POST /billing/checkout` — Stripe Checkout (нужны `STRIPE_SECRET_KEY` и `STRIPE_PRICE_*`),
+  `POST /billing/portal` — управление подпиской.
+- `POST /billing/webhook` — проверка подписи `Stripe-Signature` (HMAC-SHA256, окно 5 минут) и синхронизация
+  статуса/тарифа из событий `checkout.session.completed`, `customer.subscription.updated/deleted`.
+- Лимиты аккаунтов теперь берутся из активной подписки и проверяются и при подключении аккаунта, и при создании
+  поста. Просроченная/отменённая подписка деградирует до `free`.
+- В UI — вкладка Billing с текущим тарифом и кнопками выбора плана.
+
+> Для локальной разработки без Stripe можно оставить тариф `free`: лимит 2 аккаунта работает без внешних вызовов.
 
 Electron из старого репозитория остаётся необязательным клиентом; перенос его в тонкую обёртку над API — отдельная
 задача после P4/P5.

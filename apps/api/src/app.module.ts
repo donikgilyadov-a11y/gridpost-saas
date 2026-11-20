@@ -9,6 +9,7 @@ import { PublishingModule } from './publishing/publishing.module'
 import { OAuthModule } from './oauth/oauth.module'
 import { AiModule } from './ai/ai.module'
 import { AnalyticsModule } from './analytics/analytics.module'
+import { BillingModule } from './billing/billing.module'
 import { HealthController } from './health/health.controller'
 
 @Module({
@@ -22,7 +23,8 @@ import { HealthController } from './health/health.controller'
     PublishingModule,
     OAuthModule,
     AiModule,
-    AnalyticsModule
+    AnalyticsModule,
+    BillingModule
   ],
   controllers: [HealthController]
 })

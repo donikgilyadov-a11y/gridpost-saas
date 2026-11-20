@@ -130,6 +130,28 @@ export interface Recommendation {
   priority: 'high' | 'medium' | 'low'
 }
 
+export interface Subscription {
+  plan: string
+  status: string
+  limits: { accounts: number; postsPerMonth: number }
+  currentPeriodEnd: string | null
+  cancelAtPeriodEnd: boolean
+}
+
+export interface PlanInfo {
+  id: string
+  accounts: number
+  postsPerMonth: number
+}
+
+export const billing = {
+  plans: () => api<PlanInfo[]>('/billing/plans'),
+  subscription: () => api<Subscription>('/billing/subscription'),
+  checkout: (plan: string) =>
+    api<{ url: string }>('/billing/checkout', { method: 'POST', body: JSON.stringify({ plan }) }),
+  portal: () => api<{ url: string }>('/billing/portal', { method: 'POST', body: '{}' })
+}
+
 export const analytics = {
   summary: () => api<AnalyticsSummary>('/analytics/summary'),
   sync: () => api<{ synced: number; errors: string[] }>('/analytics/sync', { method: 'POST', body: '{}' }),

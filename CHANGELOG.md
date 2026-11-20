@@ -15,3 +15,5 @@
   на уровне организации, AI-черновики с обязательным ручным подтверждением публикации, вкладка AI Studio в UI.
 - **P5**: метрики Reach/Impressions/Engagement и др. (снимки в PostgreSQL), синхронизация Insights Facebook и
   Instagram, сводка по площадкам, AI-рекомендации, вкладка Analytics в веб-клиенте.
+- **P6**: Stripe Checkout и Billing Portal, webhook с проверкой подписи, модель подписки, тарифы Free…Enterprise,
+  принудительное соблюдение лимитов аккаунтов на сервере, вкладка Billing.

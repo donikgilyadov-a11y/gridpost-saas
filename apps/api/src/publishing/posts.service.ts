@@ -1,8 +1,9 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
-import { PLAN_LIMITS, makeIdempotencyKey, type PlanId, type PublishJobPayload } from '@gridpost/shared'
+import { makeIdempotencyKey, type PublishJobPayload } from '@gridpost/shared'
 import { PrismaService } from '../prisma/prisma.service'
 import { QueueService } from '../queue/queue.service'
+import { BillingService } from '../billing/billing.service'
 
 export interface CreatePostInput {
   organizationId: string
@@ -17,18 +18,18 @@ export interface CreatePostInput {
 export class PostsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly queue: QueueService
+    private readonly queue: QueueService,
+    private readonly billing: BillingService
   ) {}
 
   async create(input: CreatePostInput) {
-    const plan = await this.prisma.withOrg(input.organizationId, (tx) =>
-      tx.organization.findUniqueOrThrow({ where: { id: input.organizationId } }).then((org) => org.plan as unknown as PlanId)
-    )
-    const limit = PLAN_LIMITS[plan].accounts
+    const limits = await this.billing.limitsFor(input.organizationId)
     const accountCount = await this.prisma.withOrg(input.organizationId, (tx) =>
       tx.socialAccount.count({ where: { organizationId: input.organizationId } })
     )
-    if (accountCount > limit) throw new ForbiddenException(`Тариф ${plan} ограничивает количество аккаунтов`)
+    if (accountCount > limits.accounts) {
+      throw new ForbiddenException(`Тариф ограничивает количество аккаунтов (${limits.accounts})`)
+    }
 
     const window = input.scheduledAt?.toISOString().slice(0, 16) ?? 'now'
     const idempotencyKey = makeIdempotencyKey(input.organizationId, input.key, 'post', window)

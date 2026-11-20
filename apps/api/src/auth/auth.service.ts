@@ -35,7 +35,7 @@ export class AuthService {
     })
 
     return {
-      token: this.sign({ userId: result.user.id, organizationId: result.organization.id, role: 'OWNER' }),
+      token: this.sign({ userId: result.user.id, organizationId: result.organization.id, role: 'OWNER', email: result.user.email }),
       user: { id: result.user.id, email: result.user.email },
       organizationId: result.organization.id
     }
@@ -56,7 +56,8 @@ export class AuthService {
       token: this.sign({
         userId: user.id,
         organizationId: membership.organizationId,
-        role: membership.role
+        role: membership.role,
+        email: user.email
       }),
       user: { id: user.id, email: user.email },
       organizationId: membership.organizationId
@@ -67,7 +68,8 @@ export class AuthService {
     return this.jwt.sign({
       sub: user.userId,
       orgId: user.organizationId,
-      role: user.role
+      role: user.role,
+      email: user.email
     })
   }
 

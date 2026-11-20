@@ -1,10 +1,14 @@
 import 'reflect-metadata'
 import { Logger, ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
+import * as express from 'express'
 import { AppModule } from './app.module'
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule)
+
+  // Stripe signature verification needs the untouched request body.
+  app.use('/api/v1/billing/webhook', express.raw({ type: '*/*' }))
 
   app.setGlobalPrefix('api/v1')
   app.enableShutdownHooks()

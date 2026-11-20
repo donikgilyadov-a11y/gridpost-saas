@@ -13,6 +13,7 @@ export interface AuthUser {
   userId: string
   organizationId: string
   role: 'OWNER' | 'ADMIN' | 'MEMBER'
+  email?: string
 }
 
 export class ZodPipe<T> implements PipeTransform {

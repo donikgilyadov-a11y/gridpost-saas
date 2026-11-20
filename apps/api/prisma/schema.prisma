@@ -38,7 +38,7 @@ enum TargetStatus {
   SKIPPED
 }
 
-enum PlanId {
+enum BillingPlan {
   FREE
   STARTER
   PRO
@@ -51,7 +51,7 @@ model Organization {
   id        String   @id @default(uuid()) @db.Uuid
   name      String
   slug      String   @unique
-  plan      PlanId   @default(FREE)
+  plan      BillingPlan @default(FREE)
   timezone  String   @default("UTC")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -65,6 +65,7 @@ model Organization {
   secretKeys     OrganizationKey[]
   oauthStates    OAuthState[]
   metrics        MetricSnapshot[]
+  subscription   Subscription?
 
   @@map("organizations")
 }
@@ -204,6 +205,22 @@ model AuditLog {
 
   @@index([organizationId, createdAt])
   @@map("audit_logs")
+}
+
+model Subscription {
+  id                   String    @id @default(uuid()) @db.Uuid
+  organizationId       String    @unique @db.Uuid
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  plan                 BillingPlan @default(FREE)
+  status               String    @default("active")
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  updatedAt            DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
 }
 
 /// Envelope-encrypted data key, one per organization and key version.
