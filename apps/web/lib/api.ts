@@ -82,7 +82,9 @@ export const posts = {
   list: () => api<PostView[]>('/posts'),
   create: (body: unknown) => api<PostView>('/posts', { method: 'POST', body: JSON.stringify(body) }),
   retry: (id: string) => api<PostView>(`/posts/${id}/retry`, { method: 'POST' }),
-  publish: (id: string) => api<PostView>(`/posts/${id}/publish`, { method: 'POST' })
+  publish: (id: string) => api<PostView>(`/posts/${id}/publish`, { method: 'POST' }),
+  reschedule: (id: string, scheduledAt: string) =>
+    api<PostView>(`/posts/${id}/schedule`, { method: 'PATCH', body: JSON.stringify({ scheduledAt }) })
 }
 
 export const accounts = {

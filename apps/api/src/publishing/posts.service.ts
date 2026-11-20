@@ -183,6 +183,26 @@ export class PostsService {
     return post
   }
 
+  async reschedule(organizationId: string, postId: string, scheduledAt: string) {
+    const post = await this.get(organizationId, postId)
+    if (post.status === 'PUBLISHED' || post.status === 'PUBLISHING') {
+      throw new Error('Опубликованный или отправляемый пост нельзя перенести')
+    }
+    await this.prisma.withOrg(organizationId, (tx) =>
+      tx.post.update({
+        where: { id: postId },
+        data: { scheduledAt: new Date(scheduledAt), status: 'SCHEDULED' }
+      })
+    )
+    await this.prisma.withOrg(organizationId, (tx) =>
+      tx.postTarget.updateMany({
+        where: { organizationId, postId, status: { in: ['PENDING', 'QUEUED'] } },
+        data: { status: 'PENDING' }
+      })
+    )
+    return this.get(organizationId, postId)
+  }
+
   async retryFailed(organizationId: string, postId: string) {
     await this.prisma.withOrg(organizationId, async (tx) => {
       await tx.postTarget.updateMany({

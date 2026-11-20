@@ -173,6 +173,17 @@ Threads (Threads API), Pinterest (Pins API) — плюс YouTube и TikTok, ко
 - **Inbox**: синхронизация комментариев Facebook/Instagram через Graph API, дедупликация по `externalId`,
   отметка «прочитано», вкладка Inbox.
 
+## Интерфейс и релиз
+
+- Тёмная и светлая темы (переключатель в сайдбаре, выбор хранится в localStorage), RU/EN метки навигации.
+- Календарь с drag-and-drop: перетаскивание поста на другую дату меняет `scheduledAt` через
+  `PATCH /posts/:id/schedule` (опубликованные посты не переносятся).
+- Docker-образы `api` и `web` публикуются в GHCR по тегу `v*` (`.github/workflows/docker.yml`); манифесты
+  Kubernetes и бэкап-скрипт описаны выше.
+
+Локальный запуск: `docker compose up -d`, `npm install`, `npm run prisma:generate`, миграции, `npm run dev:api`
+и `npm run dev:web`.
+
 Electron из старого репозитория остаётся необязательным клиентом; перенос его в тонкую обёртку над API — отдельная
 задача после P4/P5.
 

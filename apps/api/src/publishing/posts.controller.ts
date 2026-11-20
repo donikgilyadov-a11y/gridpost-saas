@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common'
 import { z } from 'zod'
 import { CurrentOrg, CurrentUser, JwtAuthGuard, OrganizationGuard, ZodPipe, type AuthUser } from '../common/auth'
 import { PostsService } from './posts.service'
+
+const scheduleSchema = z.object({ scheduledAt: z.string().datetime() })
 
 const createPostSchema = z.object({
   key: z.string().min(8).max(100),
@@ -39,6 +41,15 @@ export class PostsController {
   @Get(':id')
   get(@CurrentOrg() organizationId: string, @Param('id') id: string) {
     return this.posts.get(organizationId, id)
+  }
+
+  @Patch(':id/schedule')
+  reschedule(
+    @CurrentOrg() organizationId: string,
+    @Param('id') id: string,
+    @Body(new ZodPipe(scheduleSchema)) body: { scheduledAt: string }
+  ) {
+    return this.posts.reschedule(organizationId, id, body.scheduledAt)
   }
 
   @Post(':id/retry')

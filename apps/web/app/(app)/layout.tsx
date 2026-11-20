@@ -4,25 +4,28 @@ import { useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { clearSession, session } from '@/lib/api'
+import { setLang, setTheme, t, useLang, useTheme, type LabelKey } from '@/lib/i18n'
 
-const NAV = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/calendar', label: 'Calendar' },
-  { href: '/create', label: 'Create' },
-  { href: '/ai', label: 'AI Studio' },
-  { href: '/accounts', label: 'Social Accounts' },
-  { href: '/media', label: 'Media' },
-  { href: '/inbox', label: 'Inbox' },
-  { href: '/clients', label: 'Clients' },
-  { href: '/automations', label: 'Automations' },
-  { href: '/analytics', label: 'Analytics' },
-  { href: '/billing', label: 'Billing' },
-  { href: '/settings', label: 'Settings' }
+const NAV: { href: string; label: LabelKey }[] = [
+  { href: '/dashboard', label: 'dashboard' },
+  { href: '/calendar', label: 'calendar' },
+  { href: '/create', label: 'create' },
+  { href: '/ai', label: 'aiStudio' },
+  { href: '/accounts', label: 'socialAccounts' },
+  { href: '/media', label: 'media' },
+  { href: '/inbox', label: 'inbox' },
+  { href: '/clients', label: 'clients' },
+  { href: '/automations', label: 'automations' },
+  { href: '/analytics', label: 'analytics' },
+  { href: '/billing', label: 'billing' },
+  { href: '/settings', label: 'settings' }
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
+  const lang = useLang()
+  const theme = useTheme()
 
   useEffect(() => {
     if (!session()) router.replace('/')
@@ -35,20 +38,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <nav className="nav">
           {NAV.map((item) => (
             <Link key={item.href} href={item.href} className={pathname === item.href ? 'active' : ''}>
-              {item.label}
+              {t(lang, item.label)}
             </Link>
           ))}
         </nav>
-        <button
-          className="ghost small"
-          style={{ marginTop: 24, width: '100%' }}
-          onClick={() => {
-            clearSession()
-            router.replace('/')
-          }}
-        >
-          Выйти
-        </button>
+        <div className="col" style={{ marginTop: 20 }}>
+          <button
+            className="ghost small"
+            onClick={() => setLang(lang === 'ru' ? 'en' : 'ru')}
+          >
+            {lang === 'ru' ? 'EN' : 'RU'}
+          </button>
+          <button
+            className="ghost small"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          >
+            {theme === 'dark' ? t(lang, 'light') : t(lang, 'dark')}
+          </button>
+          <button
+            className="ghost small"
+            onClick={() => {
+              clearSession()
+              router.replace('/')
+            }}
+          >
+            {t(lang, 'logout')}
+          </button>
+        </div>
       </aside>
       <main className="content">{children}</main>
     </div>
