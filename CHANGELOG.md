@@ -29,3 +29,4 @@
   Dockerfile для web и workflow публикации Docker-образов в GHCR по тегу.
 - **P8e**: реальная загрузка видео в YouTube (resumable) и TikTok (PULL_URL + polling publish_id) из S3,
   тесты обоих адаптеров; Prisma Client генерируется при сборке и копируется в production-слой образа.
+- Подробная инструкция продакшн-деплоя: `docs/DEPLOYMENT.md` (БД/RLS, секреты, OAuth, Stripe, бэкапы, откат).
